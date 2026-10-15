@@ -214,45 +214,51 @@ function cow(x, y, s, phase) {
   ctx.restore();
 }
 
-// Vẽ đống rơm, không dùng emoji
-function hay(x, y, s) {
+
+ // Vẽ đống rơm lớn
+function hay(x, y, s = 1) {
   ctx.save();
   ctx.translate(x, y);
-  ctx.scale(s, s);
+
+  // Tăng kích thước đống rơm
+  ctx.scale(s * 1.8, s * 1.8);
 
   // Bóng dưới đống rơm
-  ctx.fillStyle = "rgba(80,60,25,0.2)";
+  ctx.fillStyle = "rgba(60, 40, 15, 0.3)";
   ctx.beginPath();
-  ctx.ellipse(0, 2, 28, 8, 0, 0, Math.PI*2);
+  ctx.ellipse(0, 2, 35, 10, 0, 0, Math.PI * 2);
   ctx.fill();
 
   // Thân đống rơm
-  ctx.fillStyle = "#e9b83f";
+  ctx.fillStyle = "#d99b26";
   ctx.beginPath();
-  ctx.moveTo(-25, -2);
-  ctx.lineTo(-22, -19);
-  ctx.lineTo(-13, -29);
-  ctx.lineTo(12, -29);
-  ctx.lineTo(24, -17);
-  ctx.lineTo(26, -2);
+  ctx.moveTo(-32, 0);
+  ctx.lineTo(-30, -22);
+  ctx.lineTo(-22, -38);
+  ctx.lineTo(-10, -46);
+  ctx.lineTo(12, -46);
+  ctx.lineTo(27, -34);
+  ctx.lineTo(32, -18);
+  ctx.lineTo(32, 0);
   ctx.closePath();
   ctx.fill();
 
-  // Lớp rơm sáng
-  ctx.fillStyle = "#f8d96c";
+  // Phần rơm sáng trên đỉnh
+  ctx.fillStyle = "#ffe078";
   ctx.beginPath();
-  ctx.ellipse(0, -23, 18, 9, 0, Math.PI, Math.PI*2);
+  ctx.ellipse(0, -38, 22, 10, 0, Math.PI, Math.PI * 2);
   ctx.fill();
 
-  // Sợi rơm
-  ctx.strokeStyle = "#bc8528";
+  // Các sợi rơm
+  ctx.strokeStyle = "#b77a1e";
   ctx.lineWidth = 2;
-  for (let i = -15; i <= 15; i += 10) {
+  for (let i = -22; i <= 22; i += 8) {
     ctx.beginPath();
-    ctx.moveTo(i, -18);
+    ctx.moveTo(i, -27);
     ctx.lineTo(i + 3, -5);
     ctx.stroke();
   }
+
   ctx.restore();
 }
 
