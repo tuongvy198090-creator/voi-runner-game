@@ -10,9 +10,9 @@ st.set_page_config(
 
 st.markdown("""
 <style>
-#MainMenu, footer, header {visibility:hidden;}
-.block-container {padding:0!important;max-width:100%!important;}
-iframe {border:0!important;}
+#MainMenu,footer,header{visibility:hidden}
+.block-container{padding:0!important;max-width:100%!important}
+iframe{border:0!important}
 </style>
 """, unsafe_allow_html=True)
 
@@ -30,7 +30,7 @@ canvas{width:100%;height:100vh;display:block;touch-action:none}
  position:fixed;inset:0;z-index:5;color:white;
  display:flex;flex-direction:column;align-items:center;
  justify-content:center;text-align:center;padding:20px;
- background:linear-gradient(#102d20e8,#07180df5)
+ background:linear-gradient(#102d20ed,#07180df5)
 }
 h1{color:#c4ff91;text-shadow:0 0 18px #54e66d}
 #menu h1{font-size:clamp(30px,6vw,55px)}
@@ -54,7 +54,6 @@ button{background:#a1f16c;color:#17391c;font-weight:bold;cursor:pointer}
  box-shadow:0 0 14px #baff83;pointer-events:none
 }
 #win{display:none}
-.small{font-size:13px;opacity:.85}
 @media(max-width:600px){
  #help{max-width:145px;font-size:11px}
  #joystick{width:115px;height:115px}
@@ -74,7 +73,7 @@ button{background:#a1f16c;color:#17391c;font-weight:bold;cursor:pointer}
   <option value="girl">Nhân vật nữ</option>
  </select>
  <button id="startBtn">▶ BẮT ĐẦU</button>
- <p class="small">Tìm đá quý và giải cứu cây cổ thụ ở cuối con đường.</p>
+ <p>Hãy tìm đá quý và giải cứu cây cổ thụ!</p>
 </div>
 
 <div id="hud" style="display:none">
@@ -82,11 +81,13 @@ button{background:#a1f16c;color:#17391c;font-weight:bold;cursor:pointer}
  💎 Đá quý: <span id="gemsLabel">0</span>/5<br>
  🌳 Hãy khám phá khu rừng!
 </div>
+
 <div id="help" style="display:none">
  <b>DI CHUYỂN</b><br>
  Máy tính: WASD hoặc phím mũi tên<br>
- Kéo nút tròn để đi 8 hướng
+ Kéo nút tròn để di chuyển
 </div>
+
 <div id="joystick" style="display:none"><div id="knob"></div></div>
 
 <div id="win">
@@ -100,57 +101,60 @@ button{background:#a1f16c;color:#17391c;font-weight:bold;cursor:pointer}
 const canvas=document.getElementById("game");
 const ctx=canvas.getContext("2d");
 let W=0,H=0;
+
 function resize(){
  W=canvas.width=innerWidth;
  H=canvas.height=innerHeight;
 }
-addEventListener("resize",resize);resize();
+addEventListener("resize",resize);
+resize();
 
 let running=false,won=false,treeGreen=false;
 let playerName="Nhà thám hiểm",gender="boy";
 let px=0,pz=0,gems=0,lastTime=0;
-let keys={},joyX=0,joyY=0,collected=new Set();
+let keys={},joyX=0,joyY=0;
+let collected=new Set();
 
 const WORLD_END=220;
 const TREE_Z=210;
 
-// Đá quý được đặt cố định rải khắp con đường dài.
-const gemPositions=[];
-for(let i=0;i<95;i++){
- const z=7+i*2.12;
- const side=(Math.sin(i*12.37)*1.65);
- gemPositions.push({
-  x:side,
-  z:z,
-  color:["#58f5ff","#ff72e8","#fff36b",
-         "#a8a0ff","#76ff8b"][i%5]
- });
-}
+// Chỉ có 12 viên đá quý.
+// Mỗi viên có tọa độ thế giới cố định: x là vị trí ngang, z là vị trí xa/gần.
+const gemPositions=[
+ {x:-3.0,z:18,color:"#58f5ff"},
+ {x: 2.8,z:34,color:"#ff72e8"},
+ {x:-4.0,z:49,color:"#fff36b"},
+ {x: 4.0,z:66,color:"#a8a0ff"},
+ {x: 1.8,z:83,color:"#76ff8b"},
+ {x:-2.8,z:101,color:"#58f5ff"},
+ {x: 4.2,z:121,color:"#ff72e8"},
+ {x:-4.1,z:139,color:"#fff36b"},
+ {x: 2.6,z:157,color:"#a8a0ff"},
+ {x:-3.7,z:174,color:"#76ff8b"},
+ {x: 3.8,z:191,color:"#58f5ff"},
+ {x: 0.8,z:201,color:"#ff72e8"}
+];
 
-// Tọa độ đường cong cố định trong thế giới.
-// Đường uốn trái phải liên tục, không được tạo lại ngẫu nhiên.
+// Đường uốn cong cố định, không tạo đường mới khi di chuyển.
 function roadCurve(z){
- return Math.sin(z*0.035)*1.15+
-        Math.sin(z*0.078)*0.38+
-        Math.sin(z*0.014)*0.65;
+ return Math.sin(z*0.035)*1.15
+      + Math.sin(z*0.078)*0.38
+      + Math.sin(z*0.014)*0.65;
 }
 
-// Chiếu một vị trí trong thế giới ra màn hình.
-// dz là khoảng cách từ nhân vật tới vật thể.
-function project(z,side=0){
+// Phép chiếu từ thế giới ra màn hình.
+// Tọa độ z của vật thể không đổi; chỉ phối cảnh thay đổi khi người chơi tiến lên.
+function project(z){
  const dz=z-pz;
- const depth=1-dz/90;
- const t=Math.max(0,Math.min(1,depth));
- const y=H*0.405+t*t*H*0.66;
+ const depth=Math.max(0,Math.min(1,1-dz/90));
+ const y=H*0.405+depth*depth*H*0.66;
  const center=W*0.5+roadCurve(z)*W*0.055;
- const scale=0.10+t*0.90;
- return {
-  x:center+side*W*(0.025+t*0.13),
-  y:y,
-  depth:t,
-  scale:scale,
-  center:center
- };
+ return {x:center,y,depth,center};
+}
+
+function worldXToScreen(worldX,z){
+ const p=project(z);
+ return p.center+(worldX-px)*W*(0.025+p.depth*0.13);
 }
 
 function startGame(){
@@ -167,6 +171,7 @@ function startGame(){
  document.getElementById("nameLabel").textContent=playerName;
  updateHud();
 }
+
 document.getElementById("startBtn").onclick=startGame;
 document.getElementById("againBtn").onclick=()=>{
  running=false;
@@ -176,6 +181,7 @@ document.getElementById("againBtn").onclick=()=>{
  document.getElementById("help").style.display="none";
  document.getElementById("joystick").style.display="none";
 };
+
 function updateHud(){
  document.getElementById("gemsLabel").textContent=gems;
 }
@@ -189,22 +195,26 @@ addEventListener("keydown",e=>{
 addEventListener("keyup",e=>keys[e.key.toLowerCase()]=false);
 addEventListener("blur",()=>keys={});
 
-// Joystick tròn
+// Joystick
 const joystick=document.getElementById("joystick");
 const knob=document.getElementById("knob");
 let joyActive=false;
+
 function moveJoy(e){
  const r=joystick.getBoundingClientRect();
  let dx=e.clientX-(r.left+r.width/2);
  let dy=e.clientY-(r.top+r.height/2);
- const max=r.width*0.32,len=Math.hypot(dx,dy);
+ const max=r.width*.32,len=Math.hypot(dx,dy);
  if(len>max){dx=dx/len*max;dy=dy/len*max;}
  joyX=dx/max;joyY=dy/max;
  knob.style.left=(r.width/2-26+dx)+"px";
  knob.style.top=(r.height/2-26+dy)+"px";
 }
+
 joystick.addEventListener("pointerdown",e=>{
- joyActive=true;joystick.setPointerCapture(e.pointerId);moveJoy(e);
+ joyActive=true;
+ joystick.setPointerCapture(e.pointerId);
+ moveJoy(e);
 });
 joystick.addEventListener("pointermove",e=>{
  if(joyActive)moveJoy(e);
@@ -221,138 +231,152 @@ joystick.addEventListener("pointercancel",releaseJoy);
 function drawSky(){
  const sky=ctx.createLinearGradient(0,0,0,H);
  sky.addColorStop(0,"#5da9bd");
- sky.addColorStop(0.35,"#c6dfb0");
- sky.addColorStop(0.405,"#355b32");
+ sky.addColorStop(.35,"#c6dfb0");
+ sky.addColorStop(.405,"#355b32");
  sky.addColorStop(1,"#102519");
- ctx.fillStyle=sky;ctx.fillRect(0,0,W,H);
+ ctx.fillStyle=sky;
+ ctx.fillRect(0,0,W,H);
 
  ctx.fillStyle="#476f3c";
- ctx.beginPath();ctx.moveTo(0,H*.43);
+ ctx.beginPath();
+ ctx.moveTo(0,H*.43);
  for(let x=0;x<=W;x+=25)
   ctx.lineTo(x,H*.39+Math.sin(x*.009)*H*.035);
- ctx.lineTo(W,H);ctx.lineTo(0,H);ctx.fill();
+ ctx.lineTo(W,H);
+ ctx.lineTo(0,H);
+ ctx.fill();
 }
 
-// Đường rất dài; phần đường trước mắt luôn được vẽ theo tọa độ thế giới.
 function drawRoad(){
- const horizon=H*.405;
  const segments=100;
+
  ctx.fillStyle="#92794b";
  ctx.beginPath();
+
  for(let i=0;i<=segments;i++){
   const dz=90-(i/segments)*90;
   const z=pz+dz;
   const p=project(z);
-  const half=W*(0.008+p.depth*0.105);
+  const half=W*(.006+p.depth*.075);
   if(i===0)ctx.moveTo(p.center-half,p.y);
   else ctx.lineTo(p.center-half,p.y);
  }
+
  for(let i=segments;i>=0;i--){
   const dz=90-(i/segments)*90;
   const z=pz+dz;
   const p=project(z);
-  const half=W*(0.008+p.depth*0.105);
+  const half=W*(.006+p.depth*.075);
   ctx.lineTo(p.center+half,p.y);
  }
- ctx.closePath();ctx.fill();
 
- // Hai mép đường
- ctx.strokeStyle="#c1a56c";ctx.lineWidth=3;
+ ctx.closePath();
+ ctx.fill();
+
+ ctx.strokeStyle="#b99a61";
+ ctx.lineWidth=3;
+
  for(const side of [-1,1]){
   ctx.beginPath();
   for(let i=0;i<=segments;i++){
    const z=pz+90-(i/segments)*90;
    const p=project(z);
-   const half=W*(0.008+p.depth*0.105);
+   const half=W*(.006+p.depth*.075);
    const x=p.center+side*half;
-   if(i===0)ctx.moveTo(x,p.y);else ctx.lineTo(x,p.y);
+   if(i===0)ctx.moveTo(x,p.y);
+   else ctx.lineTo(x,p.y);
   }
   ctx.stroke();
  }
 
- // Vạch giữa đường uốn theo đường cong
- ctx.strokeStyle="#e8d7a7";ctx.lineWidth=2;
- ctx.setLineDash([10,15]);ctx.lineDashOffset=-pz*12;
+ ctx.strokeStyle="#e8d7a7";
+ ctx.lineWidth=2;
+ ctx.setLineDash([10,15]);
+ ctx.lineDashOffset=-pz*12;
  ctx.beginPath();
+
  for(let i=0;i<=segments;i++){
   const z=pz+90-(i/segments)*90;
   const p=project(z);
-  if(i===0)ctx.moveTo(p.center,p.y);else ctx.lineTo(p.center,p.y);
+  if(i===0)ctx.moveTo(p.center,p.y);
+  else ctx.lineTo(p.center,p.y);
  }
- ctx.stroke();ctx.setLineDash([]);
+ ctx.stroke();
+ ctx.setLineDash([]);
 }
 
-// Rừng rậm: nhiều cây lớn, tán cây dày, mọc sát đất.
-// Vị trí từng cây cố định theo z trong thế giới.
+// Cây rừng lớn, dày đặc; từng cây có vị trí z cố định.
 function drawForest(){
- for(let i=0;i<100;i++){
-  const z=i*2.65+3;
+ for(let i=0;i<115;i++){
+  const z=i*2.15+2;
   const dz=z-pz;
-  if(dz< -2||dz>95)continue;
+  if(dz< -2||dz>92)continue;
 
   const p=project(z);
   const depth=p.depth;
-  const size=(18+depth*155);
-  const sideDistance=W*(0.10+depth*0.42);
-  const jitter=(Math.sin(i*45.7)*W*0.045);
+  const size=24+depth*190;
 
   for(const side of [-1,1]){
-   const x=p.center+side*sideDistance+jitter;
-   const groundY=p.y+size*0.05;
+   const offset=(0.95+depth*4.5)
+      +(Math.sin(i*43.71+side)*.45);
+   const worldX=roadCurve(z)+side*offset;
+   const x=worldXToScreen(worldX,z);
+   const groundY=p.y+size*.04;
 
-   // Thân cây: gốc luôn đặt tại mặt đất
+   // Thân cây
    ctx.fillStyle=["#3d2b1c","#523824","#60442a"][i%3];
-   ctx.fillRect(x-size*.13,groundY-size*.72,size*.26,size*.72);
+   ctx.fillRect(x-size*.12,groundY-size*.72,size*.24,size*.72);
 
    // Cành lớn
    ctx.strokeStyle="#49321e";
    ctx.lineWidth=Math.max(2,size*.10);
    ctx.beginPath();
-   ctx.moveTo(x,groundY-size*.32);
-   ctx.lineTo(x-size*.35,groundY-size*.58);
-   ctx.moveTo(x,groundY-size*.40);
-   ctx.lineTo(x+size*.34,groundY-size*.60);
+   ctx.moveTo(x,groundY-size*.30);
+   ctx.lineTo(x-size*.34,groundY-size*.57);
+   ctx.moveTo(x,groundY-size*.39);
+   ctx.lineTo(x+size*.34,groundY-size*.59);
    ctx.stroke();
 
-   // Tán nhiều lớp để tạo cảm giác rừng rậm
-   const greens=["#123d24","#17502b","#1d5c30",
-                 "#246b35","#2d7338"];
+   // Nhiều lớp tán lá
+   const greens=["#103a21","#154a28","#1a592e",
+                 "#226832","#2b7138"];
    ctx.fillStyle=greens[i%greens.length];
    ctx.beginPath();
-   ctx.arc(x,groundY-size*.82,size*.42,0,Math.PI*2);
-   ctx.arc(x-size*.28,groundY-size*.70,size*.34,0,Math.PI*2);
-   ctx.arc(x+size*.28,groundY-size*.70,size*.34,0,Math.PI*2);
-   ctx.arc(x,groundY-size*1.03,size*.31,0,Math.PI*2);
+   ctx.arc(x,groundY-size*.79,size*.43,0,Math.PI*2);
+   ctx.arc(x-size*.27,groundY-size*.68,size*.34,0,Math.PI*2);
+   ctx.arc(x+size*.27,groundY-size*.68,size*.34,0,Math.PI*2);
+   ctx.arc(x,groundY-size*1.02,size*.32,0,Math.PI*2);
    ctx.fill();
 
-   // Tán phụ làm rừng kín hơn
    ctx.fillStyle=greens[(i+2)%greens.length];
    ctx.beginPath();
-   ctx.arc(x-size*.17,groundY-size*.90,size*.22,0,Math.PI*2);
-   ctx.arc(x+size*.18,groundY-size*.88,size*.23,0,Math.PI*2);
+   ctx.arc(x-size*.17,groundY-size*.90,size*.23,0,Math.PI*2);
+   ctx.arc(x+size*.18,groundY-size*.89,size*.23,0,Math.PI*2);
    ctx.fill();
   }
  }
 }
 
-// Đá quý nằm ở những vị trí cố định trên đường.
-// Chúng chỉ biến mất khi người chơi nhặt được.
+// Đá quý rải rác giữa rừng, không xếp thành hàng trên đường.
 function drawGems(){
  for(let i=0;i<gemPositions.length;i++){
   if(collected.has(i))continue;
+
   const g=gemPositions[i];
   const dz=g.z-pz;
-  if(dz<0.5||dz>90)continue;
+  if(dz<.5||dz>90)continue;
 
   const p=project(g.z);
-  const x=p.center+(g.x-px)*W*(0.025+p.depth*.13);
+  const x=worldXToScreen(g.x,g.z);
   const y=p.y-5-p.depth*12;
-  const r=4+p.depth*17;
+  const r=4+p.depth*16;
 
   ctx.save();
   ctx.translate(x,y);
-  ctx.shadowBlur=16;ctx.shadowColor=g.color;
+  ctx.shadowBlur=15;
+  ctx.shadowColor=g.color;
   ctx.fillStyle=g.color;
+
   ctx.beginPath();
   ctx.moveTo(0,-r);
   ctx.lineTo(r*.7,-r*.2);
@@ -360,13 +384,14 @@ function drawGems(){
   ctx.lineTo(0,r);
   ctx.lineTo(-r*.5,r*.8);
   ctx.lineTo(-r*.7,-r*.2);
-  ctx.closePath();ctx.fill();
+  ctx.closePath();
+  ctx.fill();
   ctx.restore();
  }
 }
 
-// Cây cổ thụ được đặt ở cuối đường tại TREE_Z.
-// Không tạo vị trí mới theo nhân vật; chỉ phối cảnh thay đổi khi tiến gần.
+// Cây cổ thụ rất lớn ở cuối đường.
+// TREE_Z và tọa độ ngang của cây không phụ thuộc px của người chơi.
 function drawAncientTree(){
  const dz=TREE_Z-pz;
  if(dz< -4||dz>100)return;
@@ -374,57 +399,91 @@ function drawAncientTree(){
  const p=project(TREE_Z);
  const x=p.center;
  const y=p.y;
- const size=22+p.depth*190;
 
- // Thân lớn
- ctx.fillStyle="#49321f";
- ctx.fillRect(x-size*.13,y-size*.70,size*.26,size*.70);
+ // Kích thước lớn, tán rộng.
+ const size=55+p.depth*300;
 
- // Cành
- ctx.strokeStyle="#49321f";
- ctx.lineWidth=Math.max(4,size*.09);
+ // Bóng dưới gốc cây
+ ctx.fillStyle="#09180b77";
  ctx.beginPath();
- ctx.moveTo(x,y-size*.30);
- ctx.lineTo(x-size*.36,y-size*.60);
- ctx.moveTo(x,y-size*.42);
- ctx.lineTo(x+size*.36,y-size*.61);
+ ctx.ellipse(x,y,size*.48,size*.10,0,0,Math.PI*2);
+ ctx.fill();
+
+ // Thân cây to
+ ctx.fillStyle="#49301c";
+ ctx.beginPath();
+ ctx.moveTo(x-size*.13,y);
+ ctx.lineTo(x-size*.10,y-size*.72);
+ ctx.lineTo(x+size*.10,y-size*.72);
+ ctx.lineTo(x+size*.15,y);
+ ctx.closePath();
+ ctx.fill();
+
+ // Rễ lớn
+ ctx.strokeStyle="#49301c";
+ ctx.lineWidth=Math.max(5,size*.075);
+ ctx.lineCap="round";
+ ctx.beginPath();
+ ctx.moveTo(x,y-size*.18);
+ ctx.lineTo(x-size*.35,y-size*.04);
+ ctx.moveTo(x,y-size*.18);
+ ctx.lineTo(x+size*.36,y-size*.04);
  ctx.stroke();
 
- // Tán cổ thụ
- ctx.fillStyle=treeGreen?"#36db51":"#655c42";
+ // Cành vươn rộng
+ ctx.lineWidth=Math.max(5,size*.055);
  ctx.beginPath();
- ctx.arc(x,y-size*.78,size*.34,0,Math.PI*2);
- ctx.arc(x-size*.25,y-size*.65,size*.28,0,Math.PI*2);
- ctx.arc(x+size*.25,y-size*.65,size*.28,0,Math.PI*2);
- ctx.arc(x,y-size*.96,size*.26,0,Math.PI*2);
+ ctx.moveTo(x,y-size*.48);
+ ctx.lineTo(x-size*.40,y-size*.70);
+ ctx.lineTo(x-size*.48,y-size*.82);
+ ctx.moveTo(x,y-size*.43);
+ ctx.lineTo(x+size*.40,y-size*.68);
+ ctx.lineTo(x+size*.49,y-size*.80);
+ ctx.moveTo(x,y-size*.60);
+ ctx.lineTo(x+size*.05,y-size*.88);
+ ctx.stroke();
+
+ // Tán cây khổng lồ, nhiều lớp
+ ctx.fillStyle=treeGreen?"#28bb49":"#554d37";
+ ctx.beginPath();
+ ctx.arc(x,y-size*.88,size*.34,0,Math.PI*2);
+ ctx.arc(x-size*.25,y-size*.78,size*.31,0,Math.PI*2);
+ ctx.arc(x+size*.25,y-size*.78,size*.31,0,Math.PI*2);
+ ctx.arc(x-size*.43,y-size*.72,size*.23,0,Math.PI*2);
+ ctx.arc(x+size*.43,y-size*.72,size*.23,0,Math.PI*2);
+ ctx.arc(x,y-size*1.10,size*.25,0,Math.PI*2);
  ctx.fill();
 
  if(treeGreen){
+  // Ánh sáng bắn lên trời
   ctx.save();
-  ctx.globalAlpha=.8;
+  ctx.globalAlpha=.82;
   const beam=ctx.createLinearGradient(x,0,x,y);
   beam.addColorStop(0,"#eaff9a00");
-  beam.addColorStop(.5,"#d7ff8b99");
+  beam.addColorStop(.45,"#d7ff8bcc");
   beam.addColorStop(1,"#eaff9a00");
   ctx.fillStyle=beam;
   ctx.beginPath();
-  ctx.moveTo(x-size*.15,y-size*.95);
-  ctx.lineTo(x+size*.15,y-size*.95);
-  ctx.lineTo(x+size*.8,0);
-  ctx.lineTo(x-size*.8,0);
-  ctx.closePath();ctx.fill();
+  ctx.moveTo(x-size*.20,y-size*1.08);
+  ctx.lineTo(x+size*.20,y-size*1.08);
+  ctx.lineTo(x+size*.85,0);
+  ctx.lineTo(x-size*.85,0);
+  ctx.closePath();
+  ctx.fill();
   ctx.restore();
  }
 
- if(dz<32&&dz>0){
+ if(dz<38&&dz>0){
   ctx.fillStyle="white";
-  ctx.font="bold 16px Arial";
+  ctx.font="bold 17px Arial";
   ctx.textAlign="center";
-  ctx.fillText(gems>=5?"CÂY CỔ THỤ":"Hãy tìm 5 viên đá quý",x,y-size*1.12);
+  ctx.fillText(
+   gems>=5?"CÂY CỔ THỤ":"Hãy tìm đủ 5 viên đá quý",
+   x,y-size*1.20
+  );
  }
 }
 
-// Nhân vật luôn đứng gần giữa phía dưới màn hình
 function drawPlayer(){
  const x=W*.5,y=H*.83;
  const moving=Math.abs(joyX)>.1||Math.abs(joyY)>.1||
@@ -459,8 +518,10 @@ function drawPlayer(){
  ctx.lineTo(x+16,y-79);ctx.lineTo(x-16,y-79);ctx.fill();
 
  if(gender==="girl"){
-  ctx.beginPath();ctx.arc(x-15,y-78,6,0,Math.PI*2);
-  ctx.arc(x+15,y-78,6,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();
+  ctx.arc(x-15,y-78,6,0,Math.PI*2);
+  ctx.arc(x+15,y-78,6,0,Math.PI*2);
+  ctx.fill();
  }
 }
 
@@ -473,28 +534,31 @@ function update(dt){
  if(keys["arrowup"]||keys["w"])dz++;
  if(keys["arrowdown"]||keys["s"])dz--;
 
- dx+=joyX;dz-=joyY;
+ dx+=joyX;
+ dz-=joyY;
+
  const len=Math.hypot(dx,dz);
  if(len>1){dx/=len;dz/=len;}
 
  const speed=dt*.012;
- px=Math.max(-3.5,Math.min(3.5,px+dx*speed*2.2));
+ px=Math.max(-5,Math.min(5,px+dx*speed*2.2));
  pz=Math.max(0,Math.min(WORLD_END,pz+dz*speed*3.5));
 
- // Nhặt đá quý theo khoảng cách thực tế trong thế giới
+ // Nhặt đá quý dựa vào tọa độ cố định trong thế giới
  for(let i=0;i<gemPositions.length;i++){
   if(collected.has(i))continue;
   const g=gemPositions[i];
-  if(Math.abs(g.z-pz)<1.8&&Math.abs(g.x-px)<1.8){
+
+  if(Math.abs(g.z-pz)<1.8&&Math.abs(g.x-px)<1.4){
    collected.add(i);
    gems++;
    updateHud();
   }
  }
 
- // Chạm tới cây cổ thụ và đã có ít nhất 5 viên thì thắng
  if(pz>=TREE_Z-2&&gems>=5){
-  won=true;treeGreen=true;
+  won=true;
+  treeGreen=true;
   document.getElementById("winText").textContent=
    "Chúc mừng "+playerName+"! Em đã thu thập đủ đá quý và hồi sinh cây cổ thụ.";
   document.getElementById("win").style.display="flex";
