@@ -15,72 +15,50 @@ game = r"""
 <meta charset="UTF-8">
 <style>
 *{box-sizing:border-box}
-body{
-  margin:0;background:#102b20;color:white;
-  font-family:Arial,sans-serif;overflow:hidden
-}
-#game{
-  position:relative;width:100%;max-width:1100px;
-  margin:auto
-}
-canvas{
-  display:block;width:100%;height:auto;
-  border-radius:12px;background:#254d32
-}
+body{margin:0;background:#102719;color:white;font-family:Arial}
+#game{position:relative;width:100%;max-width:1100px;margin:auto}
+canvas{width:100%;height:auto;display:block;border-radius:12px}
 .panel{
-  position:absolute;inset:0;display:flex;
-  justify-content:center;align-items:center;
-  background:rgba(5,24,17,.83);z-index:5;
-  padding:15px
+ position:absolute;inset:0;display:flex;align-items:center;
+ justify-content:center;background:#07190fdc;z-index:5;padding:12px
 }
 .card{
-  width:min(420px,95%);padding:25px;
-  background:linear-gradient(145deg,#214f37,#102d23);
-  border:2px solid #a6dc80;border-radius:20px;
-  text-align:center;box-shadow:0 0 30px #7bd66b55
+ width:min(460px,96%);padding:24px;text-align:center;
+ background:linear-gradient(145deg,#244f32,#10291d);
+ border:2px solid #b6df87;border-radius:20px;
+ box-shadow:0 0 25px #0008
 }
-h1{color:#d9ff9d;font-size:clamp(24px,4vw,36px);margin:0 0 10px}
+h1{color:#e0ffad;font-size:clamp(25px,4vw,38px)}
 p{line-height:1.5}
-input,select,button{
-  font-size:16px;border-radius:10px;
-  padding:12px;border:0
-}
-input,select{width:100%;margin:7px 0;background:#fff;color:#183425}
-button{
-  cursor:pointer;font-weight:bold;
-  background:#b9ef78;color:#173820;margin:5px
-}
-button:hover{background:#e0ffae}
+input,select,button{font-size:16px;padding:12px;border-radius:10px;border:0}
+input,select{width:100%;margin:6px 0}
+button{cursor:pointer;font-weight:bold;background:#c8f38a;color:#19351f;margin:5px}
+button:hover{background:#e4ffc0}
 #hud{
-  position:absolute;top:10px;left:10px;right:10px;
-  display:flex;justify-content:space-between;gap:8px;
-  pointer-events:none;flex-wrap:wrap
+ position:absolute;top:10px;left:10px;right:10px;
+ display:flex;justify-content:space-between;gap:6px;flex-wrap:wrap;
+ pointer-events:none
 }
-.tag{
-  background:#102b20dd;border:1px solid #b9ef78;
-  border-radius:10px;padding:8px 12px;font-size:14px
-}
+.tag{background:#102719dd;border:1px solid #b6df87;border-radius:10px;padding:8px 11px;font-size:14px}
 #controls{
-  position:absolute;bottom:12px;left:12px;
-  display:grid;grid-template-columns:45px 45px 45px;
-  grid-template-rows:42px 42px;gap:4px
+ position:absolute;bottom:12px;left:12px;
+ display:grid;grid-template-columns:48px 48px 48px;
+ grid-template-rows:44px 44px;gap:4px
 }
 #controls button{
-  margin:0;padding:5px;font-size:19px;
-  background:#173b2cdd;color:white;
-  border:1px solid #b9ef78;touch-action:none
+ margin:0;padding:4px;font-size:21px;color:white;
+ background:#183a2cdd;border:1px solid #d5f5a6;
+ touch-action:none
 }
 #up{grid-column:2;grid-row:1}
 #left{grid-column:1;grid-row:2}
 #down{grid-column:2;grid-row:2}
 #right{grid-column:3;grid-row:2}
 #hint{
-  position:absolute;bottom:15px;right:12px;
-  max-width:47%;background:#102b20dd;
-  border-radius:10px;padding:9px;font-size:12px;
-  text-align:right
+ position:absolute;right:12px;bottom:15px;max-width:48%;
+ background:#102719dd;padding:9px;border-radius:10px;
+ font-size:12px;text-align:right
 }
-#win h1{font-size:clamp(25px,4vw,38px)}
 </style>
 </head>
 <body>
@@ -88,449 +66,471 @@ button:hover{background:#e0ffae}
 <canvas id="canvas" width="1000" height="650"></canvas>
 
 <div id="hud" style="display:none">
-  <div class="tag" id="nameTag">Nhà thám hiểm</div>
-  <div class="tag" id="gemTag">💎 Ngọc: 0/5</div>
-  <div class="tag" id="rabbitTag">🐇 Chú thỏ: chưa giúp</div>
+ <div class="tag" id="nameTag">Nhà thám hiểm</div>
+ <div class="tag" id="gemTag">💎 Ngọc: 0/5</div>
 </div>
 
 <div id="controls" style="display:none">
-  <button id="up">▲</button>
-  <button id="left">◀</button>
-  <button id="down">▼</button>
-  <button id="right">▶</button>
+ <button id="up">▲</button>
+ <button id="left">◀</button>
+ <button id="down">▼</button>
+ <button id="right">▶</button>
 </div>
-<div id="hint" style="display:none">
-  Dùng WASD hoặc phím mũi tên để di chuyển
-</div>
+<div id="hint" style="display:none">WASD hoặc phím mũi tên để di chuyển</div>
 
 <div class="panel" id="start">
-  <div class="card">
-    <h1>🌿 GIẢI CỨU THẾ GIỚI 🌿</h1>
-    <p>Khu rừng đang dần héo úa. Hãy tìm những viên ngọc phép thuật, giúp chú thỏ và hồi sinh Cây Cổ Thụ!</p>
-    <input id="playerName" maxlength="18" placeholder="Tên nhân vật của em">
-    <select id="gender">
-      <option value="girl">Nhân vật nữ</option>
-      <option value="boy">Nhân vật nam</option>
-    </select>
-    <button onclick="startGame()" style="width:100%;margin-top:12px">
-      BẮT ĐẦU PHIÊU LƯU
-    </button>
-    <p style="font-size:12px">Thu thập đủ 5 viên ngọc rồi đến gần Cây Cổ Thụ nhé!</p>
-  </div>
+ <div class="card">
+  <h1>🌿 GIẢI CỨU THẾ GIỚI 🌿</h1>
+  <p>Khu rừng đang héo úa. Hãy tìm đủ 5 viên ngọc phép thuật để hồi sinh Cây Cổ Thụ!</p>
+  <input id="playerName" maxlength="18" placeholder="Tên nhân vật của em">
+  <select id="gender">
+   <option value="girl">Nhân vật nữ</option>
+   <option value="boy">Nhân vật nam</option>
+  </select>
+  <button onclick="startGame()" style="width:100%;margin-top:10px">BẮT ĐẦU PHIÊU LƯU</button>
+  <p style="font-size:12px">Khám phá khu rừng, thu thập ngọc và tìm Cây Cổ Thụ.</p>
+ </div>
 </div>
 
 <div class="panel" id="win" style="display:none">
-  <div class="card">
-    <div style="font-size:58px">🌳✨🌎</div>
-    <h1>BẠN ĐÃ GIẢI CỨU THẾ GIỚI THÀNH CÔNG!</h1>
-    <p>Khu rừng đã hồi sinh nhờ bạn!</p>
-    <p>Những mầm xanh lại vươn lên, muôn loài được sống bình yên. Em chính là người hùng của khu rừng!</p>
-    <button onclick="restartGame()">CHƠI LẠI</button>
-  </div>
+ <div class="card">
+  <div style="font-size:65px">🌳✨</div>
+  <h1>BẠN ĐÃ GIẢI CỨU THẾ GIỚI THÀNH CÔNG!</h1>
+  <p>Khu rừng đã hồi sinh nhờ bạn. Ánh sáng phép thuật đã trở lại!</p>
+  <button onclick="restartGame()">CHƠI LẠI</button>
+ </div>
 </div>
 </div>
 
 <script>
 const canvas=document.getElementById('canvas');
 const ctx=canvas.getContext('2d');
-
 const W=canvas.width,H=canvas.height;
-const worldW=2600,worldH=2100;
+const WORLD=3200;
+const keys={};
 
-let running=false,won=false,light=0,winTimer=0;
+let running=false,won=false,light=0;
 let playerName='Nhà thám hiểm',gender='girl';
-let keys={};
-let camera={x:0,y:0};
-let gems=[],trees=[],bushes=[],flowers=[];
-let rabbit={x:1200,y:1050,rescued:false};
-let collected=0;
-let player={x:300,y:300,speed:3.2,dir:0};
-let victoryStarted=false;
+let collected=0,victoryStarted=false,winTimer=0;
+let player={x:1600,y:1600,angle:0,speed:4};
+let trees=[],gems=[];
+const ancient={x:2600,y:850};
 
-function rand(seed){
-  let x=Math.sin(seed*127.1+311.7)*43758.5453;
-  return x-Math.floor(x);
+function rand(n){
+ const v=Math.sin(n*127.1+311.7)*43758.5453;
+ return v-Math.floor(v);
 }
 
-function createWorld(){
-  trees=[];bushes=[];flowers=[];gems=[];
-  for(let i=0;i<530;i++){
-    let x=rand(i+2)*worldW;
-    let y=rand(i+900)*worldH;
-    if(Math.hypot(x-300,y-300)<115)continue;
-    if(Math.hypot(x-2200,y-1650)<170)continue;
-    trees.push({x,y,s:0.65+rand(i+400)*0.85,
-      type:rand(i+600)});
-  }
-  for(let i=0;i<360;i++){
-    bushes.push({
-      x:rand(i+1200)*worldW,
-      y:rand(i+1600)*worldH,
-      s:0.5+rand(i+2000)*0.8
-    });
-  }
-  for(let i=0;i<160;i++){
-    flowers.push({
-      x:rand(i+2500)*worldW,
-      y:rand(i+3500)*worldH,
-      c:['#f7e7a0','#f3b6c8','#c5e9ff'][i%3]
-    });
-  }
-  for(let i=0;i<5;i++){
-    gems.push({
-      x:550+i*360,
-      y:500+(i%2)*410,
-      got:false,
-      hue:i
-    });
-  }
+function makeWorld(){
+ trees=[];gems=[];
+ // Rừng cây mọc dày đặc
+ for(let i=0;i<1450;i++){
+  let x=rand(i+10)*WORLD;
+  let y=rand(i+1800)*WORLD;
+  if(Math.hypot(x-1600,y-1600)<100)continue;
+  if(Math.hypot(x-ancient.x,y-ancient.y)<115)continue;
+  trees.push({
+   x,y,
+   size:0.8+rand(i+4000)*1.15,
+   kind:rand(i+8000)
+  });
+ }
+ // Năm viên ngọc nằm rải rác trong rừng
+ const spots=[
+  [1200,1300],[1900,1100],[1000,2100],
+  [2300,1700],[2800,1200]
+ ];
+ spots.forEach((p,i)=>gems.push({
+  x:p[0],y:p[1],got:false,color:
+  ['#76f5ff','#e6a8ff','#fff19b','#a5c8ff','#b2ff9b'][i]
+ }));
 }
-
-const ancient={x:2200,y:1650};
 
 function startGame(){
-  playerName=document.getElementById('playerName').value.trim()||'Nhà thám hiểm';
-  gender=document.getElementById('gender').value;
-  document.getElementById('start').style.display='none';
-  document.getElementById('hud').style.display='flex';
-  document.getElementById('controls').style.display='grid';
-  document.getElementById('hint').style.display='block';
-  document.getElementById('nameTag').textContent='🧭 '+playerName;
-  running=true;
-  requestAnimationFrame(loop);
+ playerName=document.getElementById('playerName').value.trim()||'Nhà thám hiểm';
+ gender=document.getElementById('gender').value;
+ document.getElementById('start').style.display='none';
+ document.getElementById('hud').style.display='flex';
+ document.getElementById('controls').style.display='grid';
+ document.getElementById('hint').style.display='block';
+ document.getElementById('nameTag').textContent='🧭 '+playerName;
+ running=true;
+ requestAnimationFrame(loop);
 }
 
 function restartGame(){
-  player={x:300,y:300,speed:3.2,dir:0};
-  collected=0;
-  rabbit={x:1200,y:1050,rescued:false};
-  won=false;victoryStarted=false;winTimer=0;
-  createWorld();
-  document.getElementById('win').style.display='none';
-  document.getElementById('hud').style.display='flex';
-  document.getElementById('controls').style.display='grid';
-  document.getElementById('hint').style.display='block';
-  running=true;
-  requestAnimationFrame(loop);
+ player={x:1600,y:1600,angle:0,speed:4};
+ collected=0;victoryStarted=false;winTimer=0;won=false;
+ makeWorld();
+ document.getElementById('gemTag').textContent='💎 Ngọc: 0/5';
+ document.getElementById('win').style.display='none';
+ document.getElementById('hud').style.display='flex';
+ document.getElementById('controls').style.display='grid';
+ document.getElementById('hint').style.display='block';
+ running=true;
+ requestAnimationFrame(loop);
 }
 
-function drawTree(x,y,s,type,old=false){
-  ctx.save();ctx.translate(x,y);ctx.scale(s,s);
+// Đổi tọa độ khu rừng thành góc nhìn từ sau lưng nhân vật
+function project(x,y){
+ const dx=x-player.x,dy=y-player.y;
+ const a=player.angle;
+ const forward=dx*Math.cos(a)+dy*Math.sin(a);
+ const side=-dx*Math.sin(a)+dy*Math.cos(a);
+ if(forward<15)return null;
+ const focal=410;
+ const scale=focal/(forward+110);
+ return {
+  x:W/2+side*scale,
+  y:285+145*scale,
+  scale,depth:forward
+ };
+}
 
-  // Bóng dưới gốc cây
-  ctx.fillStyle='#183b27';
-  ctx.beginPath();ctx.ellipse(0,5,34,13,0,0,Math.PI*2);ctx.fill();
+function drawBackground(){
+ const sky=ctx.createLinearGradient(0,0,0,H);
+ sky.addColorStop(0,'#8bb9a0');
+ sky.addColorStop(.5,'#b6c9a0');
+ sky.addColorStop(1,'#537d42');
+ ctx.fillStyle=sky;ctx.fillRect(0,0,W,H);
 
-  // Thân cây
-  ctx.strokeStyle=old?'#655143':'#765039';
-  ctx.lineWidth=12;ctx.lineCap='round';
+ // Mặt đất rừng
+ ctx.fillStyle='#496e39';
+ ctx.beginPath();
+ ctx.moveTo(0,285);ctx.lineTo(W,285);
+ ctx.lineTo(W,H);ctx.lineTo(0,H);ctx.fill();
+
+ // Lối mòn giữa rừng
+ ctx.fillStyle='#8a7951';
+ ctx.beginPath();
+ ctx.moveTo(460,285);ctx.lineTo(540,285);
+ ctx.lineTo(870,H);ctx.lineTo(130,H);ctx.closePath();ctx.fill();
+
+ // Ánh sáng tự nhiên trên mặt đất, không phát sáng
+ ctx.fillStyle='#66854a';
+ ctx.beginPath();
+ ctx.moveTo(490,285);ctx.lineTo(510,285);
+ ctx.lineTo(650,H);ctx.lineTo(350,H);ctx.closePath();ctx.fill();
+}
+
+function drawTree(t){
+ const q=project(t.x,t.y);
+ if(!q||q.x<-120||q.x>W+120||q.y>H+130)return;
+ const s=Math.min(5.5,q.scale*90*t.size);
+ const x=q.x,y=q.y;
+ if(s<2)return;
+
+ ctx.save();
+ // Bóng cây bình thường
+ ctx.fillStyle='#29482b88';
+ ctx.beginPath();ctx.ellipse(x,y,Math.max(3,s*.48),Math.max(2,s*.12),0,0,Math.PI*2);ctx.fill();
+
+ // Thân cây
+ ctx.fillStyle='#60452e';
+ ctx.fillRect(x-s*.12,y-s*.8,s*.24,s*.82);
+
+ // Tán cây nhiều tầng
+ const old=!victoryStarted;
+ const greens=old?
+  ['#6b7050','#77734c','#5b6743']:
+  ['#347b3d','#3f9147','#4c9e4f'];
+ for(let i=0;i<3;i++){
+  ctx.fillStyle=greens[i];
   ctx.beginPath();
-  ctx.moveTo(0,5);ctx.lineTo(0,-35);
-  ctx.lineTo(-19,-56);ctx.moveTo(0,-35);
-  ctx.lineTo(19,-57);ctx.moveTo(0,-23);ctx.lineTo(-5,-73);
-  ctx.stroke();
-
-  if(old){
-    ctx.strokeStyle='#57483e';ctx.lineWidth=5;
-    ctx.beginPath();
-    ctx.moveTo(-19,-56);ctx.lineTo(-29,-68);
-    ctx.moveTo(19,-57);ctx.lineTo(29,-70);
-    ctx.moveTo(-5,-73);ctx.lineTo(-13,-83);
-    ctx.stroke();
-    // Một vài chiếc lá héo
-    ctx.fillStyle='#9b884a';
-    for(let i=0;i<5;i++){
-      ctx.beginPath();
-      ctx.ellipse((i-2)*9,-57-(i%2)*13,5,3,i*.5,0,Math.PI*2);
-      ctx.fill();
-    }
-  }else{
-    let pulse=0.5+0.5*Math.sin(light*0.04);
-    ctx.shadowColor='#9bff80';
-    ctx.shadowBlur=8+pulse*15;
-    const leaves=['#3c9c51','#55b95c','#77cf65','#2d8247'];
-    for(let i=0;i<11;i++){
-      let a=rand(i+20)*Math.PI*2;
-      let r=12+rand(i+50)*30;
-      ctx.fillStyle=leaves[i%leaves.length];
-      ctx.beginPath();
-      ctx.ellipse(Math.cos(a)*r,-57+Math.sin(a)*r,
-        15,19,a,0,Math.PI*2);
-      ctx.fill();
-    }
-    ctx.shadowBlur=0;
-    ctx.fillStyle='#b9fca0';
-    ctx.globalAlpha=.55+pulse*.35;
-    ctx.beginPath();ctx.arc(0,-59,10+pulse*5,0,Math.PI*2);ctx.fill();
-  }
-  ctx.restore();
+  ctx.moveTo(x,y-s*(2.25-i*.36));
+  ctx.lineTo(x-s*(.68-i*.12),y-s*(.95-i*.18));
+  ctx.lineTo(x+s*(.68-i*.12),y-s*(.95-i*.18));
+  ctx.closePath();ctx.fill();
+ }
+ ctx.restore();
 }
 
-function drawForest(){
-  // Mặt đất
-  ctx.fillStyle=won?'#4d9b50':'#315d39';
-  ctx.fillRect(0,0,worldW,worldH);
+function drawAncientTree(){
+ const q=project(ancient.x,ancient.y);
+ if(!q||q.x<-250||q.x>W+250||q.y>H+200)return;
+ const s=Math.min(7,q.scale*180);
+ const x=q.x,y=q.y;
+ const revived=victoryStarted;
 
-  // Mảng cỏ và lối mòn
-  for(let i=0;i<240;i++){
-    let x=rand(i+500)*worldW,y=rand(i+750)*worldH;
-    ctx.fillStyle=i%2?'#396943':'#35633d';
-    ctx.beginPath();ctx.ellipse(x,y,20,12,0,0,Math.PI*2);ctx.fill();
-  }
+ ctx.save();
+ // Bóng dưới gốc
+ ctx.fillStyle='#243d2488';
+ ctx.beginPath();ctx.ellipse(x,y,s*.65,s*.15,0,0,Math.PI*2);ctx.fill();
 
-  // Con đường quanh co
-  ctx.lineCap='round';
-  ctx.strokeStyle='#9b8a5d';ctx.lineWidth=105;
-  ctx.beginPath();ctx.moveTo(120,320);ctx.bezierCurveTo(600,450,550,850,1000,930);
-  ctx.bezierCurveTo(1350,1030,1300,1450,1800,1430);
-  ctx.bezierCurveTo(2000,1430,2050,1570,2200,1650);ctx.stroke();
-  ctx.strokeStyle='#b7a477';ctx.lineWidth=80;
+ // Thân cổ thụ
+ ctx.strokeStyle=revived?'#795335':'#594738';
+ ctx.lineWidth=Math.max(3,s*.16);
+ ctx.lineCap='round';
+ ctx.beginPath();
+ ctx.moveTo(x,y);ctx.lineTo(x-s*.05,y-s*1.1);
+ ctx.lineTo(x-s*.48,y-s*1.65);
+ ctx.moveTo(x-s*.04,y-s*1.15);ctx.lineTo(x+s*.43,y-s*1.7);
+ ctx.moveTo(x-s*.02,y-s*.85);ctx.lineTo(x-s*.1,y-s*2.05);
+ ctx.stroke();
+
+ if(!revived){
+  // Cây héo: cành khô, không có hiệu ứng phát sáng
+  ctx.strokeStyle='#6d5846';ctx.lineWidth=Math.max(2,s*.07);
+  ctx.beginPath();
+  ctx.moveTo(x-s*.48,y-s*1.65);ctx.lineTo(x-s*.65,y-s*1.85);
+  ctx.moveTo(x+s*.43,y-s*1.7);ctx.lineTo(x+s*.65,y-s*1.93);
+  ctx.moveTo(x-s*.1,y-s*2.05);ctx.lineTo(x-s*.23,y-s*2.22);
   ctx.stroke();
-
-  for(const f of flowers){
-    ctx.fillStyle=f.c;ctx.beginPath();ctx.arc(f.x,f.y,2.5,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#8a8050';
+  for(let i=0;i<7;i++){
+   ctx.beginPath();
+   ctx.ellipse(x+(i-3)*s*.13,y-s*(1.7+(i%3)*.12),s*.07,s*.035,i*.3,0,Math.PI*2);
+   ctx.fill();
   }
-  for(const b of bushes){
-    ctx.fillStyle='#245b35';
-    ctx.beginPath();ctx.arc(b.x,b.y,12*b.s,0,Math.PI*2);ctx.fill();
-    ctx.fillStyle='#347743';
-    ctx.beginPath();ctx.arc(b.x-6*b.s,b.y-4*b.s,8*b.s,0,Math.PI*2);ctx.fill();
-    ctx.beginPath();ctx.arc(b.x+7*b.s,b.y-2*b.s,7*b.s,0,Math.PI*2);ctx.fill();
+ }else{
+  // Tán lá chỉ xuất hiện khi cây hồi sinh
+  const colors=['#319449','#4eb85b','#70cd68','#9de77d'];
+  for(let i=0;i<24;i++){
+   const a=rand(i+91)*Math.PI*2;
+   const r=s*(.25+rand(i+33)*.55);
+   ctx.fillStyle=colors[i%colors.length];
+   ctx.beginPath();
+   ctx.ellipse(x+Math.cos(a)*r,y-s*1.8+Math.sin(a)*r*.65,
+    s*.16,s*.21,a,0,Math.PI*2);
+   ctx.fill();
   }
-  for(const t of trees){
-    drawTree(t.x,t.y,t.s,t.type,false);
-  }
-  drawTree(ancient.x,ancient.y,2.7,0,!victoryStarted);
+ }
+ ctx.restore();
 }
 
 function drawGem(g){
-  if(g.got)return;
-  ctx.save();ctx.translate(g.x,g.y);
-  ctx.shadowColor='#9bffff';ctx.shadowBlur=20;
-  ctx.fillStyle=['#77f7ff','#f2a9ff','#fff48b','#9cc8ff','#a5ffbc'][g.hue];
-  ctx.beginPath();
-  ctx.moveTo(0,-16);ctx.lineTo(12,-4);
-  ctx.lineTo(7,12);ctx.lineTo(-7,12);ctx.lineTo(-12,-4);
-  ctx.closePath();ctx.fill();
-  ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.stroke();
-  ctx.restore();
-}
-
-function drawRabbit(){
-  ctx.save();ctx.translate(rabbit.x,rabbit.y);
-  ctx.fillStyle=rabbit.rescued?'#fff0c4':'#eee4d2';
-  ctx.beginPath();ctx.ellipse(0,0,15,11,0,0,Math.PI*2);ctx.fill();
-  ctx.beginPath();ctx.arc(10,-12,10,0,Math.PI*2);ctx.fill();
-  ctx.beginPath();ctx.ellipse(7,-26,4,12,-.2,0,Math.PI*2);ctx.fill();
-  ctx.beginPath();ctx.ellipse(15,-26,4,11,.2,0,Math.PI*2);ctx.fill();
-  ctx.fillStyle='#d88e9d';ctx.beginPath();ctx.arc(13,-13,2,0,Math.PI*2);ctx.fill();
-  ctx.restore();
+ if(g.got)return;
+ const q=project(g.x,g.y);
+ if(!q||q.x<-30||q.x>W+30||q.y>H+20)return;
+ const s=Math.max(3,Math.min(15,q.scale*19));
+ ctx.save();
+ ctx.fillStyle=g.color;
+ ctx.beginPath();
+ ctx.moveTo(q.x,q.y-s);
+ ctx.lineTo(q.x+s*.7,q.y);
+ ctx.lineTo(q.x,q.y+s);
+ ctx.lineTo(q.x-s*.7,q.y);
+ ctx.closePath();ctx.fill();
+ ctx.strokeStyle='#fff';ctx.lineWidth=1.5;ctx.stroke();
+ ctx.restore();
 }
 
 function drawPlayer(){
-  ctx.save();ctx.translate(player.x,player.y);
+ const x=W/2,y=H-92;
+ const s=1.45;
+ ctx.save();ctx.translate(x,y);ctx.scale(s,s);
 
-  // Bóng
-  ctx.fillStyle='#193b29';
-  ctx.beginPath();ctx.ellipse(0,7,17,8,0,0,Math.PI*2);ctx.fill();
+ // Bóng dưới chân
+ ctx.fillStyle='#263d2588';
+ ctx.beginPath();ctx.ellipse(0,8,24,10,0,0,Math.PI*2);ctx.fill();
 
-  // Chân và giày
-  ctx.fillStyle='#62452f';
-  ctx.fillRect(-10,-2,7,15);ctx.fillRect(3,-2,7,15);
-  ctx.fillStyle='#49372c';
-  ctx.fillRect(-12,10,10,5);ctx.fillRect(2,10,10,5);
+ // Chân và giày
+ ctx.fillStyle='#4d3929';
+ ctx.fillRect(-13,-3,10,26);
+ ctx.fillRect(4,-3,10,26);
+ ctx.fillStyle='#302b22';
+ ctx.fillRect(-15,19,14,7);
+ ctx.fillRect(3,19,14,7);
 
-  // Ba lô
-  ctx.fillStyle='#8b603b';ctx.fillRect(-14,-27,28,25);
-  ctx.fillStyle='#b4874f';ctx.fillRect(-11,-24,22,17);
+ // Ba lô
+ ctx.fillStyle='#795333';
+ ctx.fillRect(-20,-48,40,36);
+ ctx.fillStyle='#9b7547';
+ ctx.fillRect(-16,-44,32,25);
+ ctx.fillStyle='#4b3827';
+ ctx.fillRect(-4,-44,8,25);
 
-  // Áo choàng / trang phục
-  if(gender==='girl'){
-    ctx.fillStyle='#e7dfc8';
-    ctx.beginPath();ctx.moveTo(-12,-36);ctx.lineTo(12,-36);
-    ctx.lineTo(18,-8);ctx.lineTo(-18,-8);ctx.closePath();ctx.fill();
-    ctx.fillStyle='#39874d';
-    ctx.beginPath();ctx.moveTo(-10,-34);ctx.lineTo(10,-34);
-    ctx.lineTo(14,-5);ctx.lineTo(-14,-5);ctx.closePath();ctx.fill();
-  }else{
-    ctx.fillStyle='#397c50';ctx.fillRect(-13,-37,26,31);
-    ctx.fillStyle='#c2a16d';ctx.fillRect(-4,-36,8,26);
-  }
+ // Trang phục nhìn từ sau
+ if(gender==='girl'){
+  ctx.fillStyle='#e8ddc5';
+  ctx.beginPath();ctx.moveTo(-17,-53);ctx.lineTo(17,-53);
+  ctx.lineTo(24,-13);ctx.lineTo(-24,-13);ctx.closePath();ctx.fill();
+  ctx.fillStyle='#3d8550';
+  ctx.beginPath();ctx.moveTo(-15,-52);ctx.lineTo(15,-52);
+  ctx.lineTo(20,-11);ctx.lineTo(-20,-11);ctx.closePath();ctx.fill();
+ }else{
+  ctx.fillStyle='#387b4a';
+  ctx.fillRect(-18,-55,36,43);
+  ctx.fillStyle='#b59a6a';
+  ctx.fillRect(-5,-53,10,38);
+ }
 
-  // Đầu
-  ctx.fillStyle='#e9bd91';
-  ctx.beginPath();ctx.arc(0,-45,12,0,Math.PI*2);ctx.fill();
-
-  // Tóc
-  ctx.fillStyle='#583a27';
-  ctx.beginPath();ctx.arc(0,-49,12,Math.PI,Math.PI*2);ctx.fill();
-  ctx.fillRect(-12,-49,5,11);
-  ctx.fillRect(7,-49,5,10);
-  if(gender==='girl'){
-    ctx.beginPath();ctx.ellipse(10,-54,5,3,.5,0,Math.PI*2);ctx.fill();
-    ctx.fillStyle='#a5d96a';ctx.beginPath();ctx.arc(9,-57,4,0,Math.PI*2);ctx.fill();
-  }
-  ctx.restore();
+ // Đầu và tóc, nhìn từ phía sau
+ ctx.fillStyle='#e5b78b';
+ ctx.beginPath();ctx.arc(0,-64,15,0,Math.PI*2);ctx.fill();
+ ctx.fillStyle='#503421';
+ ctx.beginPath();ctx.arc(0,-68,16,Math.PI,Math.PI*2);ctx.fill();
+ ctx.fillRect(-15,-70,5,17);
+ ctx.fillRect(10,-70,5,17);
+ if(gender==='girl'){
+  ctx.fillStyle='#503421';
+  ctx.beginPath();ctx.ellipse(0,-51,8,15,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#a8d66d';
+  ctx.beginPath();ctx.arc(12,-77,4,0,Math.PI*2);ctx.fill();
+ }
+ ctx.restore();
 }
 
-function drawDirection(){
-  if(collected<5||won)return;
-  const dx=ancient.x-player.x,dy=ancient.y-player.y;
-  const distance=Math.hypot(dx,dy);
-  if(distance<75)return;
+function drawDashedPath(){
+ if(collected<5||victoryStarted)return;
+ const dx=ancient.x-player.x,dy=ancient.y-player.y;
+ const dist=Math.hypot(dx,dy);
+ if(dist<60)return;
 
-  // Đường nét đứt phát sáng dẫn đến Cây Cổ Thụ
-  ctx.save();
-  ctx.strokeStyle='#eaff9a';
-  ctx.lineWidth=4;
-  ctx.setLineDash([10,12]);
-  ctx.lineDashOffset=-light*1.5;
-  ctx.shadowColor='#cfff72';
-  ctx.shadowBlur=13;
-  ctx.beginPath();
-  ctx.moveTo(player.x,player.y);
-  ctx.lineTo(
-    player.x+dx/distance*Math.min(distance,500),
-    player.y+dy/distance*Math.min(distance,500)
-  );
-  ctx.stroke();
-  ctx.setLineDash([]);
-  ctx.restore();
+ // Nét đứt trên mặt đất, hướng về phía cây cổ thụ
+ const a=player.angle;
+ const forward=dx*Math.cos(a)+dy*Math.sin(a);
+ const side=-dx*Math.sin(a)+dy*Math.cos(a);
+ if(forward<=0)return;
+
+ const q=project(ancient.x,ancient.y);
+ if(!q)return;
+
+ ctx.save();
+ ctx.strokeStyle='#f0ffbb';
+ ctx.lineWidth=4;
+ ctx.setLineDash([9,13]);
+ ctx.lineDashOffset=-light*1.4;
+ ctx.beginPath();
+ ctx.moveTo(W/2,H-115);
+ ctx.lineTo(q.x,q.y);
+ ctx.stroke();
+ ctx.setLineDash([]);
+ ctx.restore();
 }
 
-function drawSkyBeam(){
-  if(!victoryStarted)return;
-  const t=Math.min(winTimer/100,1);
-  const alpha=Math.min(t*1.6,1);
-  ctx.save();
-  ctx.globalAlpha=alpha;
-  ctx.translate(ancient.x,ancient.y-150);
+function drawBeam(){
+ if(!victoryStarted)return;
+ const q=project(ancient.x,ancient.y);
+ if(!q)return;
+ const s=Math.min(7,q.scale*180);
+ const x=q.x,y=q.y-s*1.8;
+ const power=Math.min(winTimer/45,1);
 
-  // Luồng sáng hướng lên trời
-  const grad=ctx.createLinearGradient(0,0,0,-850);
-  grad.addColorStop(0,'rgba(255,255,180,.85)');
-  grad.addColorStop(.25,'rgba(197,255,144,.55)');
-  grad.addColorStop(1,'rgba(190,255,180,0)');
-  ctx.fillStyle=grad;
-  ctx.beginPath();
-  ctx.moveTo(-45,0);ctx.lineTo(-125,-850);
-  ctx.lineTo(125,-850);ctx.lineTo(45,0);
-  ctx.closePath();ctx.fill();
+ ctx.save();
+ ctx.globalAlpha=power;
+ const grad=ctx.createLinearGradient(x,y,x,y-650);
+ grad.addColorStop(0,'rgba(255,255,190,.95)');
+ grad.addColorStop(.35,'rgba(202,255,152,.6)');
+ grad.addColorStop(1,'rgba(202,255,152,0)');
+ ctx.fillStyle=grad;
+ ctx.beginPath();
+ ctx.moveTo(x-s*.22,y);ctx.lineTo(x-100,y-650);
+ ctx.lineTo(x+100,y-650);ctx.lineTo(x+s*.22,y);
+ ctx.closePath();ctx.fill();
 
-  // Tia sáng trung tâm
-  ctx.strokeStyle='#ffffd0';ctx.lineWidth=7;
-  ctx.shadowColor='#e5ff9b';ctx.shadowBlur=28;
-  ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(0,-900);ctx.stroke();
+ ctx.strokeStyle='#ffffd6';ctx.lineWidth=6;
+ ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x,y-650);ctx.stroke();
 
-  // Các đốm phép thuật bay lên
-  for(let i=0;i<35;i++){
-    const yy=-((light*4+i*31)%800);
-    const xx=Math.sin(light*.04+i*2)*25;
-    ctx.fillStyle=i%2?'#fff8a5':'#c9ffb3';
-    ctx.beginPath();ctx.arc(xx,yy,2+(i%3),0,Math.PI*2);ctx.fill();
-  }
-  ctx.restore();
+ for(let i=0;i<25;i++){
+  const yy=y-((light*5+i*37)%620);
+  const xx=x+Math.sin(light*.04+i)*25;
+  ctx.fillStyle=i%2?'#fff8ac':'#caffb0';
+  ctx.beginPath();ctx.arc(xx,yy,2+(i%3),0,Math.PI*2);ctx.fill();
+ }
+ ctx.restore();
 }
 
 function update(){
-  if(!running||won)return;
-  let dx=0,dy=0;
-  if(keys['ArrowUp']||keys['w']||keys['W'])dy--;
-  if(keys['ArrowDown']||keys['s']||keys['S'])dy++;
-  if(keys['ArrowLeft']||keys['a']||keys['A'])dx--;
-  if(keys['ArrowRight']||keys['d']||keys['D'])dx++;
-  if(dx&&dy){dx*=.707;dy*=.707}
-  player.x=Math.max(25,Math.min(worldW-25,player.x+dx*player.speed));
-  player.y=Math.max(25,Math.min(worldH-25,player.y+dy*player.speed));
-  if(dx||dy)player.dir=Math.atan2(dy,dx);
+ if(!running||won)return;
+ let dx=0,dy=0;
+ if(keys.ArrowUp||keys.w||keys.W)dy--;
+ if(keys.ArrowDown||keys.s||keys.S)dy++;
+ if(keys.ArrowLeft||keys.a||keys.A)dx--;
+ if(keys.ArrowRight||keys.d||keys.D)dx++;
 
-  for(const g of gems){
-    if(!g.got&&Math.hypot(g.x-player.x,g.y-player.y)<35){
-      g.got=true;collected++;
-      document.getElementById('gemTag').textContent='💎 Ngọc: '+collected+'/5';
-    }
+ if(dx&&dy){dx*=.707;dy*=.707}
+ if(dx||dy){
+  player.angle=Math.atan2(dy,dx);
+  player.x+=dx*player.speed;
+  player.y+=dy*player.speed;
+ }
+ player.x=Math.max(20,Math.min(WORLD-20,player.x));
+ player.y=Math.max(20,Math.min(WORLD-20,player.y));
+
+ for(const g of gems){
+  if(!g.got&&Math.hypot(g.x-player.x,g.y-player.y)<48){
+   g.got=true;collected++;
+   document.getElementById('gemTag').textContent='💎 Ngọc: '+collected+'/5';
   }
+ }
 
-  if(!rabbit.rescued&&Math.hypot(rabbit.x-player.x,rabbit.y-player.y)<48){
-    rabbit.rescued=true;
-    document.getElementById('rabbitTag').textContent='🐇 Đã giúp chú thỏ!';
+ if(collected>=5&&!victoryStarted&&
+    Math.hypot(ancient.x-player.x,ancient.y-player.y)<100){
+  victoryStarted=true;
+  winTimer=0;
+ }
+ if(victoryStarted){
+  winTimer++;
+  if(winTimer>105){
+   won=true;
+   document.getElementById('win').style.display='flex';
+   document.getElementById('hud').style.display='none';
+   document.getElementById('controls').style.display='none';
+   document.getElementById('hint').style.display='none';
   }
-
-  camera.x=Math.max(0,Math.min(worldW-W,player.x-W/2));
-  camera.y=Math.max(0,Math.min(worldH-H,player.y-H/2));
-
-  // Khi đủ ngọc và đến gần cây, cây bắt đầu hồi sinh
-  if(collected>=5&&!victoryStarted&&
-     Math.hypot(ancient.x-player.x,ancient.y-player.y)<100){
-    victoryStarted=true;
-    winTimer=0;
-  }
-
-  if(victoryStarted){
-    winTimer++;
-    if(winTimer>115){
-      won=true;
-      document.getElementById('win').style.display='flex';
-      document.getElementById('hud').style.display='none';
-      document.getElementById('controls').style.display='none';
-      document.getElementById('hint').style.display='none';
-    }
-  }
+ }
 }
 
 function loop(){
-  if(!running)return;
-  light++;
-  update();
+ if(!running)return;
+ light++;
+ update();
+ drawBackground();
 
-  ctx.clearRect(0,0,W,H);
-  ctx.save();
-  ctx.translate(-camera.x,-camera.y);
+ // Vẽ vật thể xa trước, gần sau để tạo cảm giác chiều sâu
+ const visible=trees.map(t=>{
+  const q=project(t.x,t.y);
+  return {t,q};
+ }).filter(o=>o.q&&o.q.x>-150&&o.q.x<W+150&&o.q.y<H+160)
+   .sort((a,b)=>b.q.depth-a.q.depth);
 
-  drawForest();
+ for(const o of visible)drawTree(o.t);
 
-  for(const g of gems)drawGem(g);
-  drawRabbit();
-  drawDirection();
+ // Cổ thụ và ngọc
+ drawAncientTree();
+ for(const g of gems)drawGem(g);
 
-  // Nhân vật và cây được vẽ theo tọa độ thế giới
-  drawPlayer();
-  drawSkyBeam();
+ drawDashedPath();
+ drawBeam();
+ drawPlayer();
 
-  ctx.restore();
+ if(!won&&collected<5){
+  ctx.fillStyle='#fff5c9';
+  ctx.font='bold 16px Arial';
+  ctx.textAlign='center';
+  ctx.fillText('Tìm đủ 5 viên ngọc để đánh thức Cây Cổ Thụ',W/2,30);
+ }
+ if(!won&&collected>=5&&!victoryStarted){
+  ctx.fillStyle='#f0ffbd';
+  ctx.font='bold 17px Arial';
+  ctx.textAlign='center';
+  ctx.fillText('Đi theo đường nét đứt để tìm Cây Cổ Thụ!',W/2,30);
+ }
 
-  // Nhắc người chơi nếu chưa đủ ngọc
-  if(!won&&collected<5&&Math.hypot(ancient.x-player.x,ancient.y-player.y)<350){
-    ctx.fillStyle='#fff4b5';
-    ctx.font='bold 16px Arial';
-    ctx.textAlign='center';
-    ctx.fillText('Hãy tìm đủ 5 viên ngọc trước nhé!',W/2, H-25);
-  }
-
-  requestAnimationFrame(loop);
+ requestAnimationFrame(loop);
 }
 
 window.addEventListener('keydown',e=>{
-  if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' '].includes(e.key))e.preventDefault();
-  keys[e.key]=true;
+ if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' '].includes(e.key))e.preventDefault();
+ keys[e.key]=true;
 });
-window.addEventListener('keyup',e=>{keys[e.key]=false});
+window.addEventListener('keyup',e=>keys[e.key]=false);
 
 function bindButton(id,key){
-  const b=document.getElementById(id);
-  b.addEventListener('pointerdown',e=>{e.preventDefault();keys[key]=true});
-  b.addEventListener('pointerup',()=>keys[key]=false);
-  b.addEventListener('pointerleave',()=>keys[key]=false);
-  b.addEventListener('pointercancel',()=>keys[key]=false);
+ const b=document.getElementById(id);
+ b.addEventListener('pointerdown',e=>{e.preventDefault();keys[key]=true});
+ b.addEventListener('pointerup',()=>keys[key]=false);
+ b.addEventListener('pointerleave',()=>keys[key]=false);
+ b.addEventListener('pointercancel',()=>keys[key]=false);
 }
 bindButton('up','ArrowUp');
 bindButton('down','ArrowDown');
 bindButton('left','ArrowLeft');
 bindButton('right','ArrowRight');
 
-createWorld();
-drawForest();
-drawRabbit();
+makeWorld();
+drawBackground();
 drawPlayer();
 </script>
 </body>
@@ -538,3 +538,4 @@ drawPlayer();
 """
 
 components.html(game, height=690, scrolling=False)
+vv
