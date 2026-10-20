@@ -118,7 +118,7 @@ button{border:0;border-radius:12px;padding:11px 13px;background:#d4ff9b;color:#1
 
 <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
 <script>
-(()=> {
+(()=>{
 const $=id=>document.getElementById(id),world=$('world');
 if(!window.THREE){
  world.innerHTML='<div style="padding:25px">Không tải được thư viện 3D. Hãy kiểm tra Internet rồi tải lại trang.</div>';
@@ -269,7 +269,7 @@ function addChest(x,z){
  const lid=put(new THREE.BoxGeometry(1.3,.28,.9),mat(0x99602b),0,.91,0,g);
  put(new THREE.BoxGeometry(1.34,.12,.94),mat(0xf3c34e),0,.68,0,g);
  put(new THREE.BoxGeometry(.18,.28,.08),mat(0xf3c34e),0,.56,.47,g);
- chests.push({group:g,lid,opened:false,x,z});
+ chests.push({group:g,lid,opened:false,x,z,questionShown:false});
 }
 
 function clearCollectibles(){
@@ -321,13 +321,18 @@ $('girl').onclick=()=>{
 $('start').onclick=start;
 
 function ask(chest){
+ if(!chest || chest.opened || chest.questionShown)return;
+
  activeChest=chest;
+ chest.questionShown=true;
+
  const avail=questions.map((q,i)=>i).filter(i=>!used.includes(i));
  if(!avail.length)used=[];
  const pool=questions.map((q,i)=>i).filter(i=>!used.includes(i));
  const ix=pool[Math.floor(Math.random()*pool.length)];
  used.push(ix);
  const q=questions[ix];
+
  $('questionText').textContent=q.q;
  $('feedback').textContent='Chọn đáp án để mở rương!';
  const box=$('answers');
@@ -346,6 +351,7 @@ function ask(chest){
     $('count').textContent=collected;
     $('feedback').textContent='Đúng rồi! Em nhận được đá quý 💎';
     box.querySelectorAll('button').forEach(x=>x.disabled=true);
+
     setTimeout(()=>{
      $('question').style.display='none';
      $('interact').style.display='block';
@@ -357,8 +363,9 @@ function ask(chest){
   };
   box.appendChild(b);
  });
+
  $('question').style.display='flex';
- $('interact').style.display='none';
+ $('interact').style.display='block';
  held.clear();
 }
 
@@ -370,11 +377,19 @@ $('closeQuestion').onclick=()=>{
 
 $('interact').onclick=()=>{
  if(!started)return;
- const c=chests.find(c=>!c.opened&&Math.hypot(player.position.x-c.x,player.position.z-c.z)<3.6);
+
+ const c=chests.find(c=>
+  !c.opened &&
+  Math.hypot(player.position.x-c.x,player.position.z-c.z)<3.6
+ );
+
  if(c){
+  c.lid.rotation.x=-1;
+  c.lid.position.y=1.15;
   ask(c);
   return;
  }
+
  if(Math.hypot(player.position.x,player.position.z+78)<9){
   if(collected>=5){
    openedWin=true;
@@ -413,10 +428,24 @@ document.querySelectorAll('[data-dir]').forEach(b=>{
 });
 
 addEventListener('keydown',e=>{
- keys[e.key.toLowerCase()]=true;
+ const k=e.key.toLowerCase();
+
+ if($('question').style.display==='flex' && ['a','b','c','d'].includes(k)){
+  e.preventDefault();
+  const buttons=$('answers').querySelectorAll('button');
+  const index=k.charCodeAt(0)-97;
+  if(buttons[index] && !buttons[index].disabled){
+   buttons[index].click();
+  }
+  return;
+ }
+
+ keys[k]=true;
  if(e.key.startsWith('Arrow'))e.preventDefault();
 });
-addEventListener('keyup',e=>keys[e.key.toLowerCase()]=false);
+
+addEventListener('keyup',e=>keys[e.key.toLowerCase()]);
+
 addEventListener('blur',()=>{
  keys={};
  held.clear();
@@ -468,8 +497,21 @@ function animate(){
    }
   });
 
-  const near=chests.some(c=>!c.opened&&Math.hypot(player.position.x-c.x,player.position.z-c.z)<3.6);
-  $('interact').textContent=near?'🎁 Mở rương':'🔎 Tương tác';
+  const nearChest=chests.find(c=>
+   !c.opened &&
+   Math.hypot(player.position.x-c.x,player.position.z-c.z)<3.6
+  );
+
+  if(nearChest){
+   nearChest.lid.rotation.x=-1;
+   nearChest.lid.position.y=1.15;
+
+   if(!nearChest.questionShown && !activeChest){
+    ask(nearChest);
+   }
+  }
+
+  $('interact').textContent=nearChest?'🎁 Rương đang mở':'🔎 Tương tác';
 
   const target=new THREE.Vector3(player.position.x,player.position.y+4.1,player.position.z+8.5);
   camera.position.lerp(target,1-Math.pow(.001,dt));
