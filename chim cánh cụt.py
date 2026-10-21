@@ -3,594 +3,351 @@ import streamlit as st
 import streamlit.components.v1 as components
 
 st.set_page_config(
-    page_title="Chim Cánh Cụt Vượt Sông Băng",
+    page_title="Chim Cánh Cụt Vượt Tường 3D",
     page_icon="🐧",
     layout="wide"
 )
 
-st.markdown("""
-<style>
-.stApp {
-    background: #dff5ff;
-}
-.block-container {
-    max-width: 1200px;
-    padding-top: 1rem;
-}
-h1 {
-    text-align: center;
-    color: #155574;
-}
-</style>
-""", unsafe_allow_html=True)
-
-st.title("🐧 Gia đình chim cánh cụt vượt sông băng")
-st.markdown(
-    "<p style='text-align:center'>"
-    "Góc nhìn 3D từ sau lưng · Trả lời câu hỏi · Lấy cá về cho gia đình"
-    "</p>",
-    unsafe_allow_html=True
-)
-
-game = r"""
+html = r"""
 <!DOCTYPE html>
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
 *{box-sizing:border-box}
-body{margin:0;font-family:Arial;background:#b9e8fa;color:#123b52}
-#hud{
- position:absolute;z-index:5;top:10px;left:10px;right:10px;
- display:flex;gap:8px;align-items:flex-start;justify-content:space-between;
- pointer-events:none
-}
-.card{
- background:#ffffffed;border-radius:13px;padding:10px 13px;
- box-shadow:0 3px 12px #174d6722;max-width:75%
-}
-#question{font-size:16px;font-weight:bold;line-height:1.4}
-#info{font-size:12px;margin-top:5px}
-#message{font-size:13px;font-weight:bold;margin-top:5px}
-#help{font-size:11px;line-height:1.4}
-#game{width:100%;height:76vh;min-height:480px;position:relative;overflow:hidden}
-canvas{display:block;width:100%;height:100%}
-#start{
- position:absolute;inset:0;z-index:10;background:#d9f3ffed;
- display:flex;align-items:center;justify-content:center;text-align:center;padding:20px
-}
-#startbox{max-width:450px;background:white;border-radius:22px;padding:25px;box-shadow:0 8px 30px #326b8333}
-#startbox .penguins{font-size:55px}
-button{
- border:0;border-radius:12px;background:#087fa7;color:white;
- font-weight:bold;padding:12px 16px;cursor:pointer;margin-top:8px
-}
-button:hover{background:#086888}
-#actions{position:absolute;z-index:6;bottom:12px;left:0;right:0;text-align:center;pointer-events:none}
-#actions button{pointer-events:auto;margin:3px}
-#crosshair{
- position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
- color:white;font-size:22px;text-shadow:0 1px 5px #123b52;pointer-events:none
-}
-#hint{position:absolute;bottom:67px;left:10px;right:10px;text-align:center;
- font-size:12px;color:white;text-shadow:0 1px 4px #16445a;pointer-events:none}
-@media(max-width:600px){
- #game{height:75vh;min-height:460px}
- #question{font-size:14px}
- .card{padding:8px}
- #help{font-size:10px}
+body{margin:0;font-family:Arial;background:#9ce4ff}
+#game{height:680px;width:100%;position:relative;overflow:hidden}
+canvas{display:block}
+#hud{position:absolute;top:8px;left:2%;width:96%;z-index:2}
+#question{background:white;color:#173d63;padding:12px;border-radius:15px;
+font-weight:bold;font-size:clamp(16px,2.5vw,23px);text-align:center;
+box-shadow:0 3px 10px #3456}
+#answers{display:flex;justify-content:center;flex-wrap:wrap;gap:8px;margin-top:8px}
+.answer{background:#ffe16b;border:3px solid white;border-radius:13px;
+padding:12px 16px;font-size:clamp(17px,2.4vw,23px);font-weight:bold;
+color:#423500;cursor:pointer;min-width:110px}
+.answer:disabled{opacity:.8}
+#message{background:#16466bde;color:white;padding:8px 12px;
+border-radius:12px;margin:7px auto;text-align:center;font-weight:bold;
+width:fit-content;max-width:98%;font-size:15px}
+#mobile{position:absolute;bottom:12px;left:0;width:100%;
+display:flex;justify-content:space-between;align-items:end;padding:0 14px}
+.pad{display:grid;grid-template-columns:45px 45px 45px;
+grid-template-rows:45px 45px 45px;gap:3px}
+.ctrl{width:45px;height:45px;border:2px solid white;border-radius:50%;
+background:#16466bdb;color:white;font-size:23px;touch-action:none}
+#jump{height:73px;width:73px;border:3px solid white;border-radius:50%;
+background:#ffbd45;font-weight:bold;font-size:16px;color:#493500;touch-action:none}
+.overlay{position:absolute;inset:0;z-index:5;background:#103c59ed;color:white;
+display:flex;flex-direction:column;align-items:center;justify-content:center;
+text-align:center;padding:20px}
+.overlay h1{font-size:clamp(26px,5vw,43px)}
+.overlay p{font-size:18px;line-height:1.6}
+.bigbtn{background:#ffe16b;border:0;border-radius:14px;padding:14px 25px;
+font-size:21px;font-weight:bold;cursor:pointer;color:#423500}
+#win{display:none;background:#063e37ed}
+@media(max-width:500px){
+#game{height:720px}
+.answer{min-width:43%;padding:10px 5px}
+#question{padding:9px}
 }
 </style>
 </head>
 <body>
 <div id="game">
- <div id="hud">
-  <div class="card">
-   <div id="phase"><b>🐧 HÀNH TRÌNH BẮC CỰC</b></div>
-   <div id="question">Chuẩn bị vượt sông băng!</div>
-   <div id="info">Câu 1/9</div>
-   <div id="message">Hãy bắt đầu cuộc phiêu lưu!</div>
+<div id="hud">
+  <div id="question">🐧 Chào mừng đến với thử thách 14 bức tường!</div>
+  <div id="answers"></div>
+  <div id="message">Bấm BẮT ĐẦU CHƠI để bắt đầu cuộc phiêu lưu!</div>
+</div>
+
+<div id="mobile">
+  <div class="pad">
+    <div></div><button class="ctrl" data-key="up">▲</button><div></div>
+    <button class="ctrl" data-key="left">◀</button>
+    <button class="ctrl" data-key="down">▼</button>
+    <button class="ctrl" data-key="right">▶</button>
+    <div></div><div></div><div></div>
   </div>
-  <div class="card" id="help">
-   <b>ĐIỀU KHIỂN</b><br>
-   Kéo màn hình để xoay camera.<br>
-   Bấm tảng băng để nhảy tới.<br>
-   Chọn đáp án nổi trên băng.
-  </div>
- </div>
- <div id="crosshair">+</div>
- <div id="hint">Câu hỏi và đáp án đang lơ lửng trên bầu trời</div>
- <div id="actions">
-  <button onclick="resetGame()">🔄 Chơi lại</button>
-  <button onclick="toggleCamera()">🎥 Đổi góc nhìn</button>
- </div>
- <div id="start">
-  <div id="startbox">
-   <div class="penguins">🐧 🐧 🐧 🐧 🐧</div>
-   <h2>Gia đình chim cánh cụt</h2>
-   <p>Vượt qua 9 hàng băng, trả lời câu hỏi, lấy thùng cá rồi trở về với mẹ và 4 chim con.</p>
-   <p>Hãy cẩn thận! Mỗi hàng có một tảng băng yếu.</p>
-   <button onclick="startGame()">❄️ BẮT ĐẦU</button>
-  </div>
- </div>
+  <button id="jump">NHẢY ⬆</button>
+</div>
+
+<div id="start" class="overlay">
+  <h1>🐧 CHIM CÁNH CỤT VƯỢT TƯỜNG 3D</h1>
+  <p>14 câu hỏi kiến thức lớp 8 đang chờ em!<br>
+  Trả lời đúng để hạ từng bức tường.<br>
+  Laptop: WASD hoặc phím mũi tên, Space để nhảy.<br>
+  Điện thoại: dùng các nút điều khiển phía dưới.</p>
+  <button id="startBtn" class="bigbtn">BẮT ĐẦU CHƠI</button>
+</div>
+
+<div id="win" class="overlay">
+  <h1>🏆 EM ĐÃ CHIẾN THẮNG!</h1>
+  <p id="result"></p>
+  <button id="restartBtn" class="bigbtn">CHƠI LẠI</button>
+</div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
 <script>
-if (!window.THREE) {
- document.getElementById("question").textContent =
- "Không tải được thư viện 3D. Hãy kiểm tra kết nối mạng rồi tải lại trang.";
- throw new Error("Three.js failed to load");
+(function(){
+const root=document.getElementById("game");
+const qbox=document.getElementById("question");
+const abox=document.getElementById("answers");
+const msg=document.getElementById("message");
+const startScreen=document.getElementById("start");
+const winScreen=document.getElementById("win");
+
+if(!window.THREE){
+ qbox.textContent="Không tải được 3D. Em kiểm tra Internet rồi tải lại trang nhé!";
+ return;
 }
 
-const questions = [
- {q:"Toán: 3/4 + 1/4 bằng bao nhiêu?",a:["1","1/2","2"],c:0},
- {q:"Địa lí: Bắc Cực nằm quanh vùng biển nào?",a:["Địa Trung Hải","Bắc Băng Dương","Biển Đỏ"],c:1},
- {q:"Tiếng Anh: 'Penguin' nghĩa là gì?",a:["Chim cánh cụt","Cá heo","Đại bàng"],c:0},
- {q:"Khoa học: Nước đóng băng ở khoảng bao nhiêu độ C?",a:["100°C","50°C","0°C"],c:2},
- {q:"Ngữ văn: Từ nào là từ láy?",a:["Long lanh","Học sinh","Bàn ghế"],c:0},
- {q:"Toán: 7 × 8 bằng bao nhiêu?",a:["54","56","64"],c:1},
- {q:"Sinh học: Con nào là động vật có vú?",a:["Cá mập","Ếch","Cá voi"],c:2},
- {q:"Băng tan thành gì?",a:["Nước","Cát","Khói"],c:0},
- {q:"Tiếng Anh: 'Fish' nghĩa là gì?",a:["Chim","Cá","Băng"],c:1}
+const questions=[
+{cat:"Toán đại số",q:"Câu 1. Biểu thức nào là đơn thức?",a:["2x + 3","5x²y","x − y","x² + 1"],c:1},
+{cat:"Toán đại số",q:"Câu 2. Thu gọn 3x²y · 2xy², ta được:",a:["5x³y³","6x²y²","6x³y³","6x³y²"],c:2},
+{cat:"Toán hình học",q:"Câu 3. Tổng bốn góc trong của một tứ giác bằng:",a:["180°","270°","360°","90°"],c:2},
+{cat:"Toán hình học",q:"Câu 4. Hình thang cân có tính chất nào?",a:["Hai cạnh bên song song","Hai góc kề một đáy bằng nhau","Bốn cạnh bằng nhau","Hai đường chéo luôn vuông góc"],c:1},
+{cat:"Hóa học",q:"Câu 5. Dấu hiệu nào có thể cho thấy đã xảy ra phản ứng hóa học?",a:["Nước đá tan","Đường nghiền nhỏ","Xuất hiện khí khi trộn hai dung dịch","Nước bay hơi"],c:2},
+{cat:"Hóa học",q:"Câu 6. Hòa tan 10 g muối vào 90 g nước. Nồng độ phần trăm là bao nhiêu?",a:["5%","10%","15%","20%"],c:1},
+{cat:"Vật lý",q:"Câu 7. Công thức tính khối lượng riêng là:",a:["D = mV","D = V/m","D = m/V","D = m + V"],c:2},
+{cat:"Vật lý",q:"Câu 8. Dụng cụ nào hoạt động dựa trên nguyên lý đòn bẩy?",a:["Cái kéo","Nhiệt kế","Bóng đèn","Đồng hồ điện tử"],c:0},
+{cat:"Sinh học",q:"Câu 9. Bộ phận nào thuộc hệ vận động của người?",a:["Tim","Phổi","Xương","Dạ dày"],c:2},
+{cat:"Sinh học",q:"Câu 10. Hệ cơ quan nào trao đổi khí giữa cơ thể và môi trường?",a:["Hệ tiêu hóa","Hệ hô hấp","Hệ tuần hoàn","Hệ bài tiết"],c:1},
+{cat:"Địa lý",q:"Câu 11. Việt Nam nằm ở khu vực nào của châu Á?",a:["Đông Á","Tây Á","Đông Nam Á","Nam Á"],c:2},
+{cat:"Địa lý",q:"Câu 12. Đặc điểm nổi bật của địa hình Việt Nam là:",a:["Chủ yếu là đồng bằng","Chủ yếu là đồi núi","Chủ yếu là hoang mạc","Hoàn toàn là núi cao"],c:1},
+{cat:"Lịch sử",q:"Câu 13. Cách mạng tư sản Anh diễn ra vào thế kỉ nào?",a:["Thế kỉ XV","Thế kỉ XVI","Thế kỉ XVII","Thế kỉ XIX"],c:2},
+{cat:"Lịch sử",q:"Câu 14. Tuyên ngôn Độc lập của 13 thuộc địa Anh ở Bắc Mỹ được công bố năm nào?",a:["1776","1789","1640","1812"],c:0}
 ];
 
-let scene,camera,renderer,clock;
-let penguin, motherGroup, familyGroup, fishBox;
-let platforms=[], floatingLabels=[], questionSprite;
-let phase="start", row=0, returning=false, finished=false;
-let weak=[], weakHits=[], rowOptions=[], order=[];
-let busy=false, cameraAlt=false, drag=null;
-let lastTime=0;
-const platformW=2.0, platformD=1.7, rowGap=3.0;
-const startZ=5.5;
-const mats={};
+const scene=new THREE.Scene();
+scene.background=new THREE.Color(0x9ce4ff);
+scene.fog=new THREE.Fog(0x9ce4ff,40,115);
 
-function mat(color,roughness=0.8){
- return new THREE.MeshStandardMaterial({color,roughness});
+const camera=new THREE.PerspectiveCamera(65,1,0.1,250);
+const renderer=new THREE.WebGLRenderer({antialias:true});
+renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
+renderer.shadowMap.enabled=true;
+renderer.outputColorSpace=THREE.SRGBColorSpace;
+renderer.domElement.style.position="absolute";
+renderer.domElement.style.inset="0";
+renderer.domElement.style.width="100%";
+renderer.domElement.style.height="100%";
+root.insertBefore(renderer.domElement,root.firstChild);
+
+scene.add(new THREE.HemisphereLight(0xffffff,0x567d91,2));
+const sun=new THREE.DirectionalLight(0xffffff,2);
+sun.position.set(-8,18,10);
+sun.castShadow=true;
+scene.add(sun);
+
+function mat(color){return new THREE.MeshStandardMaterial({color,roughness:.82});}
+function block(parent,w,h,d,m,x,y,z){
+ const o=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m);
+ o.position.set(x,y,z);o.castShadow=true;o.receiveShadow=true;
+ parent.add(o);return o;
+}
+function ball(parent,x,y,z,sx,sy,sz,m){
+ const o=new THREE.Mesh(new THREE.SphereGeometry(1,18,14),m);
+ o.position.set(x,y,z);o.scale.set(sx,sy,sz);o.castShadow=true;
+ parent.add(o);return o;
 }
 
-function box(parent,w,h,d,material,x,y,z){
- const mesh=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),material);
- mesh.position.set(x,y,z);
- parent.add(mesh);
- return mesh;
-}
+block(scene,16,.5,220,mat(0xe9f7ff),0,-.3,-96);
+block(scene,16,.06,220,mat(0xb8eafa),0,-.02,-96);
 
-function sphere(parent,rx,ry,rz,material,x,y,z){
- const mesh=new THREE.Mesh(new THREE.SphereGeometry(1,20,16),material);
- mesh.scale.set(rx,ry,rz);
- mesh.position.set(x,y,z);
- parent.add(mesh);
- return mesh;
-}
-
-function makeTextSprite(text,opts={}){
- const canvas=document.createElement("canvas");
- const ctx=canvas.getContext("2d");
- canvas.width=opts.width||512;
- canvas.height=opts.height||128;
- ctx.fillStyle=opts.bg||"rgba(255,255,255,0.95)";
- ctx.strokeStyle=opts.border||"#72c7e4";
- ctx.lineWidth=7;
- ctx.beginPath();
- ctx.roundRect(5,5,canvas.width-10,canvas.height-10,18);
- ctx.fill();ctx.stroke();
- ctx.fillStyle=opts.color||"#16445b";
- ctx.font="bold "+(opts.font||30)+"px Arial";
- ctx.textAlign="center";ctx.textBaseline="middle";
- const max=opts.maxChars||26;
- const words=text.split(" ");
- let lines=[],line="";
- for(const word of words){
-  const test=line?line+" "+word:word;
-  if(test.length>max&&line){lines.push(line);line=word}
-  else line=test;
- }
- if(line)lines.push(line);
- const lineHeight=(opts.font||30)+7;
- const startY=canvas.height/2-(lines.length-1)*lineHeight/2;
- lines.slice(0,3).forEach((s,i)=>ctx.fillText(s,canvas.width/2,startY+i*lineHeight));
- const texture=new THREE.CanvasTexture(canvas);
- const sprite=new THREE.Sprite(new THREE.SpriteMaterial({map:texture,transparent:true,depthTest:false}));
- sprite.scale.set(opts.sw||3.2,opts.sh||0.8,1);
- return sprite;
-}
-
-function makePenguin(parent,x,y,z,scale=1){
- const g=new THREE.Group();
- g.position.set(x,y,z);g.scale.setScalar(scale);parent.add(g);
- const black=mat("#172c3b"),white=mat("#f7fbff"),orange=mat("#ff9d36"),eye=mat("#101820");
- sphere(g,.43,.64,.34,black,0,.67,0);
- sphere(g,.31,.45,.075,white,0,.61,.29);
- sphere(g,.32,.32,.3,black,0,1.25,0);
- sphere(g,.045,.045,.035,eye,-.12,1.31,.28);
- sphere(g,.045,.045,.035,eye,.12,1.31,.28);
- const beak= new THREE.Mesh(new THREE.ConeGeometry(.10,.23,8),orange);
- beak.rotation.x=Math.PI/2;beak.position.set(0,1.22,.35);g.add(beak);
- sphere(g,.16,.10,.23,black,-.43,.65,0);
- sphere(g,.16,.10,.23,black,.43,.65,0);
- sphere(g,.17,.075,.25,orange,-.2,.12,.12);
- sphere(g,.17,.075,.25,orange,.2,.12,.12);
- return g;
-}
-
-function makeWorld(){
- scene=new THREE.Scene();
- scene.background=new THREE.Color("#a9e6fa");
- scene.fog=new THREE.Fog("#a9e6fa",28,85);
- camera=new THREE.PerspectiveCamera(65,1,.1,150);
- camera.position.set(0,4.5,12);
- renderer=new THREE.WebGLRenderer({antialias:true});
- renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
- renderer.shadowMap.enabled=true;
- renderer.shadowMap.type=THREE.PCFSoftShadowMap;
- renderer.outputColorSpace=THREE.SRGBColorSpace;
- const old=document.querySelector("#game canvas");
- if(old)old.remove();
- document.getElementById("game").appendChild(renderer.domElement);
- clock=new THREE.Clock();
-
- scene.add(new THREE.HemisphereLight("#eafaff","#5e91a7",2.1));
- const sun=new THREE.DirectionalLight("#ffffff",2.4);
- sun.position.set(-8,15,9);sun.castShadow=true;scene.add(sun);
-
- const waterMat=new THREE.MeshStandardMaterial({
-  color:"#32b9e3",roughness:.24,metalness:.05
- });
- box(scene,28,.3,42,waterMat,0,-.55,-9);
-
- // Hai bờ băng lớn.
- const bankMat=mat("#e9fbff");
- box(scene,11,1.3,7,bankMat,0,-.1,8.4);
- box(scene,11,1.3,7,bankMat,0,-.1,-23.5);
-
- // Núi băng xa xa.
- const mountainMat=mat("#d5f3ff");
- for(let i=0;i<10;i++){
-  const m=new THREE.Mesh(
-   new THREE.ConeGeometry(2+Math.random()*2,4+Math.random()*5,5),
-   mountainMat
+// Cây đứng yên dọc hai bên đường.
+for(let z=12;z>-205;z-=7){
+ for(const side of [-1,1]){
+  const x=side*(5.6+Math.random()*1.2);
+  block(scene,.5,2,.5,mat(0x79563b),x,1,z);
+  const crown=new THREE.Mesh(
+   new THREE.ConeGeometry(1.55,3.2,7),
+   mat([0x247d65,0x318b62,0x4a9c71][Math.floor(Math.random()*3)])
   );
-  m.position.set(-22+i*4,1,-29-Math.random()*3);
-  scene.add(m);
+  crown.position.set(x,3.4,z);crown.castShadow=true;scene.add(crown);
  }
+}
 
- // Tuyết lấp lánh.
- const snowGeo=new THREE.BufferGeometry();
- const snowPos=[];
- for(let i=0;i<500;i++){
-  snowPos.push((Math.random()-.5)*60,Math.random()*20-2,(Math.random()-.5)*65);
+// Nhân vật chim cánh cụt.
+const penguin=new THREE.Group();scene.add(penguin);
+const dark=mat(0x202938),white=mat(0xffffff),orange=mat(0xffa02a),black=mat(0x080d15);
+ball(penguin,0,1.05,0,.52,.72,.43,dark);
+ball(penguin,0,1,-.34,.37,.48,.12,white);
+ball(penguin,0,1.95,0,.43,.42,.39,dark);
+ball(penguin,-.16,1.97,-.32,.22,.2,.14,white);
+ball(penguin,.16,1.97,-.32,.22,.2,.14,white);
+ball(penguin,-.14,1.97,-.45,.06,.08,.04,black);
+ball(penguin,.14,1.97,-.45,.06,.08,.04,black);
+ball(penguin,0,1.82,-.48,.13,.08,.15,orange);
+const wingL=block(penguin,.19,.62,.28,dark,-.52,1.13,0);
+const wingR=block(penguin,.19,.62,.28,dark,.52,1.13,0);
+const footL=block(penguin,.3,.12,.42,orange,-.25,.12,-.1);
+const footR=block(penguin,.3,.12,.42,orange,.25,.12,-.1);
+
+// 14 bức tường, mỗi bức ứng với một câu hỏi.
+const gates=[];
+for(let i=0;i<questions.length;i++){
+ const z=-10-i*12;
+ const group=new THREE.Group();scene.add(group);
+ const colors=[0x3b9dd1,0x7766c8,0x45a99a,0xd39a49,0x5388d9];
+ const wall=block(group,13,3.5,.8,mat(colors[i%colors.length]),0,1.75,z);
+ block(group,13.2,.18,1,mat(0xffffff),0,3.55,z);
+ block(group,.45,4,1.1,mat(0xffffff),-6.7,2,z);
+ block(group,.45,4,1.1,mat(0xffffff),6.7,2,z);
+ gates.push({z,wall,open:false,anim:0});
+}
+
+let gateIndex=0,started=false,finished=false;
+let playerX=0,playerZ=4,playerY=0,jumpV=0;
+let keys={},touch={},score=0,lastTime=0;
+
+function showQuestion(){
+ if(gateIndex>=questions.length)return;
+ const q=questions[gateIndex];
+ qbox.textContent=q.cat+" — "+q.q;
+ abox.innerHTML="";
+ q.a.forEach((a,i)=>{
+  const b=document.createElement("button");
+  b.className="answer";
+  b.textContent=String.fromCharCode(65+i)+". "+a;
+  b.onclick=()=>answer(i);
+  abox.appendChild(b);
+ });
+}
+function answer(i){
+ if(!started||finished||gateIndex>=questions.length||gates[gateIndex].open)return;
+ const q=questions[gateIndex];
+ if(i===q.c){
+  score++;
+  gates[gateIndex].open=true;
+  msg.textContent="🎉 Chính xác! Tường đang hạ xuống!";
+  msg.style.background="#18864c";
+  [...abox.children].forEach(b=>b.disabled=true);
+ }else{
+  msg.textContent="Chưa đúng rồi! Em hãy chọn lại nhé.";
+  msg.style.background="#b63a45";
  }
- snowGeo.setAttribute("position",new THREE.Float32BufferAttribute(snowPos,3));
- const snow=new THREE.Points(snowGeo,new THREE.PointsMaterial({color:"#ffffff",size:.10}));
- scene.add(snow);
-
- familyGroup=new THREE.Group();
- scene.add(familyGroup);
- makePenguin(familyGroup,-1.25,.65,9.3,1.12);
- makePenguin(familyGroup,-.05,.65,9.7,.68);
- makePenguin(familyGroup,.85,.65,9.5,.68);
- makePenguin(familyGroup,-.5,.65,10.3,.68);
- makePenguin(familyGroup,.55,.65,10.4,.68);
-
- // Thùng cá ở bờ đối diện.
- fishBox=new THREE.Group();scene.add(fishBox);
- const wood=mat("#a96d3a"),darkWood=mat("#704522"),fish=mat("#ffb14e");
- box(fishBox,1.8,1.1,1.3,wood,0,.6,-25);
- for(let i=-1;i<=1;i++){
-  box(fishBox,.07,1.15,1.35,darkWood,i*.55,.6,-25);
- }
- for(let i=0;i<4;i++){
-  sphere(fishBox,.18,.10,.38,fish,-.45+i*.3,1.3,-25);
- }
-
- // Tảng băng ở 9 hàng, ba cột.
- const iceMat=mat("#b9efff",.3);
- const edgeMat=mat("#effcff",.25);
- for(let r=0;r<9;r++){
-  platforms[r]=[];
-  for(let c=0;c<3;c++){
-   const g=new THREE.Group();
-   g.position.set((c-1)*3,0,-r*rowGap);
-   scene.add(g);
-   const base=box(g,platformW,.48,platformD,iceMat,0,-.35,0);
-   base.userData={r,c};
-   const top=box(g,platformW-.13,.12,platformD-.13,edgeMat,0,-.08,0);
-   top.userData={r,c};
-   const crack=new THREE.Group();
-   const crackMat=mat("#3a90b2");
-   for(let k=0;k<3;k++){
-    const line=box(crack,.025,.018,.55,crackMat,(k-1)*.18,0,0);
-    line.rotation.y=(k-1)*.55;
-   }
-   crack.position.set(0,.0,.1);
-   crack.visible=false;
-   g.add(crack);
-
-   const label=makeTextSprite("",{sw:1.8,sh:.6,font:26,maxChars:20});
-   label.position.set(0,1.9,0);
-   g.add(label);
-
-   const badge=makeTextSprite("A",{sw:.75,sh:.48,font:25,maxChars:8});
-   badge.position.set(0,1.25,0);
-   g.add(badge);
-
-   platforms[r][c]={g,base,top,crack,label,badge,r,c};
-  }
- }
-
- penguin=makePenguin(scene,0,0,startZ,1.15);
- penguin.rotation.y=Math.PI;
-
- questionSprite=makeTextSprite("CÂU HỎI",{sw:7.5,sh:1.35,font:31,maxChars:42});
- questionSprite.position.set(0,5.6,0);
- scene.add(questionSprite);
-
- window.addEventListener("resize",resize);
- renderer.domElement.addEventListener("pointerdown",pointerDown);
- renderer.domElement.addEventListener("pointerup",pointerUp);
- renderer.domElement.addEventListener("pointermove",pointerMove);
- resize();
- animate();
 }
 
 function resize(){
- if(!renderer||!camera)return;
- const el=document.getElementById("game");
- const w=el.clientWidth,h=el.clientHeight;
+ const w=root.clientWidth,h=root.clientHeight;
  renderer.setSize(w,h,false);
  camera.aspect=w/h;camera.updateProjectionMatrix();
 }
+new ResizeObserver(resize).observe(root);resize();
 
-function startGame(){
- document.getElementById("start").style.display="none";
- resetGame();
-}
+window.addEventListener("keydown",e=>{
+ const k=e.key.toLowerCase();
+ keys[k]=true;
+ if(e.code==="Space"){keys.jump=true;e.preventDefault();}
+});
+window.addEventListener("keyup",e=>{
+ keys[e.key.toLowerCase()]=false;
+ if(e.code==="Space")keys.jump=false;
+});
+window.addEventListener("blur",()=>{keys={};touch={};});
 
-function resetGame(){
- order=[0,1,2,3,4,5,6,7,8].sort(()=>Math.random()-.5);
- weak=[];weakHits=[];rowOptions=[];
- for(let r=0;r<9;r++){
-  weak[r]=Math.floor(Math.random()*3);
-  weakHits[r]=0;
-  let opts=[0,1,2].sort(()=>Math.random()-.5);
-  rowOptions[r]=opts;
- }
- row=0;phase="out";returning=false;finished=false;busy=false;
- penguin.position.set(0,0,startZ);
- penguin.rotation.y=Math.PI;
- fishBox.visible=true;
- questionSprite.visible=true;
- familyGroup.visible=true;
- for(let r=0;r<9;r++){
-  for(let c=0;c<3;c++){
-   const p=platforms[r][c];
-   p.g.visible=true;p.g.position.y=0;
-   p.crack.visible=false;
-  }
- }
- updateGame();
-}
-
-function updateGame(){
- const q=questions[order[Math.min(row,8)]];
- if(phase==="out"){
-  document.getElementById("phase").textContent="🐧 LƯỢT ĐI";
-  document.getElementById("question").textContent=q.q;
-  document.getElementById("info").textContent="Câu "+Math.min(row+1,9)+"/9";
-  document.getElementById("message").textContent=
-   "Nhảy lên tảng băng mang đáp án đúng.";
-  questionSprite.material.map.dispose();
-  questionSprite.material.map=makeTextSprite(q.q,{sw:8,sh:1.35,font:26,maxChars:45}).material.map;
-  questionSprite.material.needsUpdate=true;
- }else if(phase==="back"){
-  document.getElementById("phase").textContent="🐟 LƯỢT VỀ";
-  document.getElementById("question").textContent="Đã lấy cá! Hãy trở về với gia đình.";
-  document.getElementById("info").textContent="Về qua hàng "+(row+1)+"/9";
-  document.getElementById("message").textContent="Chọn một tảng băng chắc chắn để nhảy.";
-  questionSprite.material.map=makeTextSprite("ĐƯA CÁ VỀ NHÀ",{sw:7,sh:1.2,font:30}).material.map;
-  questionSprite.material.needsUpdate=true;
- }else if(phase==="win"){
-  document.getElementById("phase").textContent="🏆 CHIẾN THẮNG";
-  document.getElementById("question").textContent="Cả gia đình đã đoàn tụ!";
-  document.getElementById("info").textContent="Hoàn thành 9 câu hỏi";
-  document.getElementById("message").textContent="🐟 Em đã mang cá về an toàn!";
- }
- for(let r=0;r<9;r++){
-  const qrow=questions[order[r]];
-  for(let c=0;c<3;c++){
-   const p=platforms[r][c];
-   const isWeak=weak[r]===c;
-   p.crack.visible=isWeak&&weakHits[r]>0&&weakHits[r]<3;
-   if(isWeak&&weakHits[r]===1)p.g.position.y=-.18;
-   else if(isWeak&&weakHits[r]===2)p.g.position.y=-.42;
-   else if(isWeak&&weakHits[r]>=3)p.g.position.y=-1.4;
-   else p.g.position.y=0;
-   if(phase==="out"){
-    const original=rowOptions[r][c];
-    p.label.material.map=makeTextSprite(qrow.a[original],{sw:1.8,sh:.62,font:24,maxChars:14}).material.map;
-    p.label.material.needsUpdate=true;
-    p.badge.material.map=makeTextSprite(["A","B","C"][c],{sw:.65,sh:.42,font:24}).material.map;
-    p.badge.material.needsUpdate=true;
-    p.label.visible=true;p.badge.visible=true;
-   }else{
-    p.label.material.map=makeTextSprite("VỀ NHÀ",{sw:1.7,sh:.6,font:22}).material.map;
-    p.label.material.needsUpdate=true;
-    p.badge.visible=false;p.label.visible=true;
-   }
-  }
- }
-}
-
-function moveToPlatform(r,c,callback){
- if(busy)return;
- busy=true;
- const target=platforms[r][c].g.position.clone();
- const start=penguin.position.clone();
- const end=new THREE.Vector3(target.x,.02,target.z);
- penguin.rotation.y=Math.atan2(end.x-start.x,end.z-start.z);
- const duration=800;
- const t0=performance.now();
- function step(now){
-  const t=Math.min(1,(now-t0)/duration);
-  const smooth=t*t*(3-2*t);
-  penguin.position.lerpVectors(start,end,smooth);
-  penguin.position.y=Math.sin(t*Math.PI)*1.1;
-  if(t<1)requestAnimationFrame(step);
-  else{
-   penguin.position.copy(end);
-   busy=false;
-   callback();
-  }
- }
- requestAnimationFrame(step);
-}
-
-function choosePlatform(r,c){
- if(busy||finished)return;
- if(phase==="out"&&r!==row)return;
- if(phase==="back"&&r!==row)return;
- if(phase!=="out"&&phase!=="back")return;
-
- if(phase==="out"&&weak[r]===c&&weakHits[r]>=2){
-  document.getElementById("message").textContent="Tảng băng này đã chìm! Hãy chọn tảng khác.";
-  return;
- }
- moveToPlatform(r,c,()=>{
-  const isWeak=weak[r]===c;
-  if(isWeak){
-   weakHits[r]++;
-   if(weakHits[r]===1){
-    document.getElementById("message").textContent="⚠️ Băng nứt và chìm một nửa!";
-   }else if(weakHits[r]===2){
-    document.getElementById("message").textContent="⚠️ Băng chìm sâu hơn!";
-   }else{
-    document.getElementById("message").textContent="💦 Băng chìm hẳn! Trở về bờ và thử lại.";
-    setTimeout(()=>resetGame(),1300);
-    return;
-   }
-  }
-  if(phase==="out"){
-   const correct=questions[order[r]].c;
-   const selected=rowOptions[r][c];
-   if(selected!==correct){
-    document.getElementById("message").textContent="❄️ Sai đáp án! Thử tảng băng khác ở hàng này.";
-    return;
-   }
-   row++;
-   if(row>=9){
-    phase="fish";
-    penguin.position.set(0,0,-25);
-    fishBox.visible=true;
-    document.getElementById("phase").textContent="🐟 ĐÃ ĐẾN BỜ KHO CÁ";
-    document.getElementById("question").textContent="Em đã trả lời xong 9 câu!";
-    document.getElementById("info").textContent="Nhấn thùng cá để quay về";
-    document.getElementById("message").textContent="Bấm vào thùng cá trên bờ.";
-    questionSprite.material.map=makeTextSprite("ĐÃ TÌM THẤY THÙNG CÁ!",{sw:7,sh:1.2,font:28}).material.map;
-    questionSprite.material.needsUpdate=true;
-   }else updateGame();
-  }else if(phase==="back"){
-   row--;
-   if(row<0){
-    phase="win";finished=true;
-    penguin.position.set(0,0,startZ);
-    updateGame();
-   }else updateGame();
-  }
- });
-}
-
-function beginReturn(){
- phase="back";row=8;
- penguin.position.set(0,0,-25);
- fishBox.visible=false;
- updateGame();
-}
-
-function pointerDown(e){
- drag={x:e.clientX,y:e.clientY,moved:false};
-}
-function pointerMove(e){
- if(!drag)return;
- const dx=e.clientX-drag.x;
- const dy=e.clientY-drag.y;
- if(Math.abs(dx)+Math.abs(dy)>5)drag.moved=true;
- if(drag.moved){
-  camera.rotation.y-=dx*.003;
-  camera.rotation.x=Math.max(-.2,Math.min(.25,camera.rotation.x+dy*.001));
-  drag.x=e.clientX;drag.y=e.clientY;
- }
-}
-function pointerUp(e){
- if(!drag)return;
- const wasDrag=drag.moved;
- drag=null;
- if(wasDrag)return;
- const rect=renderer.domElement.getBoundingClientRect();
- const mouse=new THREE.Vector2(
-  ((e.clientX-rect.left)/rect.width)*2-1,
-  -((e.clientY-rect.top)/rect.height)*2+1
+document.querySelectorAll(".ctrl").forEach(b=>{
+ const k=b.dataset.key;
+ b.addEventListener("pointerdown",e=>{e.preventDefault();touch[k]=true;});
+ ["pointerup","pointercancel","pointerleave"].forEach(ev=>
+  b.addEventListener(ev,e=>{e.preventDefault();touch[k]=false;})
  );
- const ray=new THREE.Raycaster();
- ray.setFromCamera(mouse,camera);
- const hits=ray.intersectObjects(scene.children,true);
- for(const h of hits){
-  let o=h.object;
-  while(o){
-   if(o===fishBox&&phase==="fish"){beginReturn();return;}
-   if(o.userData&&o.userData.r!==undefined){
-    choosePlatform(o.userData.r,o.userData.c);return;
+});
+const jumpBtn=document.getElementById("jump");
+jumpBtn.addEventListener("pointerdown",e=>{e.preventDefault();touch.jump=true;});
+["pointerup","pointercancel","pointerleave"].forEach(ev=>
+ jumpBtn.addEventListener(ev,e=>{e.preventDefault();touch.jump=false;})
+);
+
+function forward(){return keys.w||keys.arrowup||touch.up;}
+function backward(){return keys.s||keys.arrowdown||touch.down;}
+function left(){return keys.a||keys.arrowleft||touch.left;}
+function right(){return keys.d||keys.arrowright||touch.right;}
+
+function update(dt){
+ if(!started||finished)return;
+ const speed=7*dt;
+ let dz=0,dx=0;
+ if(forward())dz-=speed;
+ if(backward())dz+=speed;
+ if(left())dx-=speed;
+ if(right())dx+=speed;
+ playerX=Math.max(-5.4,Math.min(5.4,playerX+dx));
+
+ if((keys.jump||touch.jump)&&playerY<=.01)jumpV=7;
+ keys.jump=false;touch.jump=false;
+ jumpV-=18*dt;playerY+=jumpV*dt;
+ if(playerY<0){playerY=0;jumpV=0;}
+
+ if(gateIndex<gates.length){
+  const g=gates[gateIndex];
+  const stopZ=g.z+1.25;
+  if(!g.open){
+   if(playerZ+dz<stopZ)playerZ=stopZ;
+   else playerZ+=dz;
+  }else{
+   playerZ+=dz;
+   g.anim=Math.min(1,g.anim+dt*1.5);
+   g.wall.position.y=1.75*(1-g.anim);
+   if(playerZ<g.z-2){
+    gateIndex++;
+    if(gateIndex<gates.length){
+     showQuestion();
+     msg.textContent="Cửa "+(gateIndex+1)+"/14 đang chờ em!";
+     msg.style.background="#16466bde";
+    }else{
+     finished=true;
+     document.getElementById("result").textContent=
+      "Em đã vượt qua đủ 14 bức tường! Trả lời đúng "+score+"/14 câu hỏi. Tuyệt vời!";
+     winScreen.style.display="flex";
+    }
    }
-   o=o.parent;
   }
+ }else playerZ+=dz;
+
+ penguin.position.set(playerX,playerY,playerZ);
+ const walking=forward()||backward()||left()||right();
+ const t=performance.now()*.009;
+ wingL.rotation.z=walking?Math.sin(t)*.35:0;
+ wingR.rotation.z=walking?-Math.sin(t)*.35:0;
+ footL.rotation.x=walking?Math.sin(t)*.35:0;
+ footR.rotation.x=walking?-Math.sin(t)*.35:0;
+
+ camera.position.lerp(new THREE.Vector3(playerX,playerY+4.4,playerZ+8.5),Math.min(1,dt*5));
+ camera.lookAt(playerX,playerY+1.1,playerZ-5);
+
+ if(gateIndex<14){
+  msg.textContent="🐧 Bức tường "+(gateIndex+1)+"/14 | Đúng: "+score+" câu";
  }
 }
 
-function toggleCamera(){
- cameraAlt=!cameraAlt;
-}
-
-function animate(){
+function animate(time){
  requestAnimationFrame(animate);
- if(!renderer)return;
- const t=clock.getElapsedTime();
- // Camera bám theo chim cánh cụt từ phía sau.
- if(penguin){
-  const distance=cameraAlt?7.5:10;
-  const desired=new THREE.Vector3(
-   penguin.position.x,
-   penguin.position.y+4.2,
-   penguin.position.z+distance
-  );
-  camera.position.lerp(desired,.06);
-  const look=new THREE.Vector3(penguin.position.x,2,penguin.position.z-5);
-  camera.lookAt(look);
- }
- // Câu hỏi luôn lơ lửng phía trước.
- if(questionSprite){
-  questionSprite.position.y=5.6+Math.sin(t*1.6)*.12;
- }
- // Băng nổi nhẹ trên mặt nước.
- for(let r=0;r<9;r++){
-  for(let c=0;c<3;c++){
-   const p=platforms[r][c];
-   if(p.g.position.y>-.5&&p.g.position.y<0){
-    p.g.position.y=-.18+Math.sin(t*2+r+c)*.035;
-   }
-  }
- }
- renderer.render(scene,camera);
+ const dt=Math.min((time-lastTime)/1000||0,.04);
+ lastTime=time;update(dt);renderer.render(scene,camera);
 }
+requestAnimationFrame(animate);
 
-makeWorld();
+function reset(){
+ playerX=0;playerZ=4;playerY=0;jumpV=0;
+ gateIndex=0;score=0;finished=false;started=true;
+ keys={};touch={};
+ gates.forEach(g=>{g.open=false;g.anim=0;g.wall.position.y=1.75;});
+ startScreen.style.display="none";
+ winScreen.style.display="none";
+ msg.style.background="#16466bde";
+ showQuestion();
+}
+document.getElementById("startBtn").onclick=reset;
+document.getElementById("restartBtn").onclick=reset;
+showQuestion();
+})();
 </script>
 </body>
 </html>
 """
 
-components.html(game, height=900, scrolling=False)
-st.caption(
-    "Nếu cảnh 3D chưa hiện, hãy kiểm tra kết nối mạng vì trò chơi tải Three.js từ CDN."
-)
+components.html(html, height=700, scrolling=False)
