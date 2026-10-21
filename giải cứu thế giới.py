@@ -3,678 +3,565 @@ import streamlit as st
 import streamlit.components.v1 as components
 
 st.set_page_config(
-    page_title="GIẢI CỨU THẾ GIỚI",
+    page_title="Giải Cứu Thế Giới",
     page_icon="🌳",
-    layout="wide"
+    layout="wide",
+    initial_sidebar_state="collapsed"
 )
 
 st.markdown("""
 <style>
-html, body, [data-testid="stAppViewContainer"] {
-    background: #071d13;
-}
-header, footer, [data-testid="stToolbar"] {
-    visibility: hidden;
-}
-.block-container {
-    padding: 0 !important;
-    max-width: 100% !important;
-}
+    header, footer, #MainMenu {visibility: hidden;}
+    .block-container {
+        padding: 0 !important;
+        max-width: 100% !important;
+    }
+    iframe {
+        border: none !important;
+    }
 </style>
 """, unsafe_allow_html=True)
 
-game_code = r'''
+game_html = r"""
 <!DOCTYPE html>
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
-* { box-sizing: border-box; }
-body {
-    margin: 0;
-    overflow: hidden;
-    font-family: Arial, sans-serif;
-    background: #173b25;
-}
-canvas {
-    display: block;
-    width: 100%;
-    height: 100%;
-}
-#game { position: relative; width: 100%; height: 790px; overflow: hidden; }
-#hud {
-    position: absolute; top: 12px; left: 12px;
-    color: white; background: #102d20dd;
-    border: 1px solid #a9d89a; border-radius: 12px;
-    padding: 10px 14px; line-height: 1.7;
-    z-index: 3;
-}
-#menu, #question, #win {
-    position: absolute; z-index: 5;
-    inset: 0; display: flex; align-items: center;
-    justify-content: center; background: #071a12b8;
-}
-.panel {
-    width: min(430px, 92%); padding: 24px;
-    background: #f4f0d7; color: #173b25;
-    border: 4px solid #7ab65d; border-radius: 20px;
-    text-align: center; box-shadow: 0 10px 35px #0008;
-}
-h1 { font-size: 28px; margin: 4px 0 12px; }
-p { line-height: 1.5; }
-input {
-    width: 100%; padding: 12px; border-radius: 9px;
-    border: 2px solid #76a45d; font-size: 16px;
-    margin: 8px 0;
-}
-button {
-    cursor: pointer; border: 0; border-radius: 10px;
-    padding: 11px 15px; margin: 5px;
-    font-weight: bold; font-size: 15px;
-    background: #2d824b; color: white;
-}
-button:hover { filter: brightness(1.12); }
-button:disabled { opacity: .55; cursor: default; }
-.choice { display:block; width:100%; text-align:left;
-    background:#fffdf0; color:#173b25; border:2px solid #a7c78d; }
-.choice.correct { background:#6ee7a0; border-color:#087b38; }
-.choice.wrong { background:#ff9e9e; border-color:#b51e1e; }
-#message { font-weight:bold; min-height:25px; }
-#controls {
-    position:absolute; bottom:18px; left:18px;
-    width:142px; height:142px; z-index:4;
-}
-.pad {
-    position:absolute; width:46px; height:46px;
-    border-radius:50%; background:#173c2bcc;
-    border:2px solid #d8efc4; color:white;
-    font-size:22px; padding:0; margin:0;
-}
-#up {left:48px;top:0}
-#down {left:48px;bottom:0}
-#left {left:0;top:48px}
-#right {right:0;top:48px}
-#hint {
-    position:absolute; bottom:18px; right:12px;
-    color:white; background:#102d20cc;
-    padding:9px 12px; border-radius:10px; z-index:3;
-    font-size:13px;
-}
-#question, #win { display:none; }
-@media(max-width:600px) {
-    #game { height: 720px; }
-    #hud { font-size:13px; }
-    h1 { font-size:23px; }
-    #hint { max-width:145px; font-size:11px; }
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,sans-serif;background:#102b20;color:white;overflow:hidden}
+#game{position:relative;width:100%;height:820px;min-height:600px;overflow:hidden;background:#173d2b}
+canvas{display:block;width:100%;height:100%}
+#hud{position:absolute;top:12px;left:12px;right:12px;display:none;
+     justify-content:space-between;gap:8px;flex-wrap:wrap;pointer-events:none}
+.badge{background:#10291fdc;border:1px solid #7acb91;border-radius:12px;
+       padding:9px 12px;font-size:14px;font-weight:bold}
+#overlay{position:absolute;inset:0;background:#06190edc;display:flex;
+         align-items:center;justify-content:center;padding:16px;z-index:5;overflow:auto}
+.panel{width:min(520px,100%);max-height:96%;overflow:auto;text-align:center;
+       background:linear-gradient(145deg,#194b32,#10291f);
+       border:2px solid #9ce8a7;border-radius:24px;padding:24px 22px;
+       box-shadow:0 0 35px #4ee98b55}
+h1{font-size:clamp(26px,5vw,42px);margin:8px 0;color:#c7ffd1}
+h2{font-size:clamp(22px,4vw,30px);color:#d5ffdb;margin:10px 0}
+p{line-height:1.65;font-size:16px}
+.small{font-size:13px;color:#c8e8ce}
+button{font-size:16px;font-weight:bold;border:0;border-radius:12px;
+       padding:12px 17px;cursor:pointer;margin:5px;background:#b8f6c1;color:#123322}
+button:hover{filter:brightness(1.1)}
+button:disabled{opacity:.45;cursor:not-allowed}
+.primary{background:#e8ce76;color:#30280c;width:100%;margin-top:12px}
+.answers{display:grid;grid-template-columns:1fr;gap:7px;margin-top:14px}
+.answers button{background:#e1f5e5;color:#183b24}
+#controls{position:absolute;bottom:16px;left:0;right:0;display:none;
+          justify-content:space-between;align-items:end;padding:0 18px;pointer-events:none}
+.pad{display:grid;grid-template-columns:52px 52px 52px;grid-template-rows:48px 48px 48px;
+     gap:4px;pointer-events:auto}
+.pad button,.action button{padding:0;margin:0;background:#10291fc9;color:white;
+     border:1px solid #a6eeb5;font-size:23px;touch-action:none}
+.pad .up{grid-column:2;grid-row:1}
+.pad .left{grid-column:1;grid-row:2}
+.pad .down{grid-column:2;grid-row:2}
+.pad .right{grid-column:3;grid-row:2}
+.action{display:flex;flex-direction:column;gap:7px;pointer-events:auto}
+.action button{font-size:14px;padding:12px}
+#toast{position:absolute;top:90px;left:50%;transform:translateX(-50%);
+       background:#10291fee;border:1px solid #c7ffd1;border-radius:12px;
+       padding:12px 16px;display:none;z-index:3;text-align:center;max-width:90%}
+.score{font-size:42px;color:#ffdf79;font-weight:bold;margin:12px}
+.stat{display:flex;justify-content:space-between;gap:12px;padding:9px 0;
+      border-bottom:1px solid #ffffff25}
+@media(max-width:500px){
+ #game{height:90vh;min-height:600px}
+ .panel{padding:18px 14px}
+ p{font-size:14px}
+ .badge{font-size:12px;padding:7px}
 }
 </style>
 </head>
 <body>
 <div id="game">
-    <div id="hud">
-        <b>🌿 GIẢI CỨU THẾ GIỚI</b><br>
-        Người chơi: <span id="playerName">Nhà thám hiểm</span><br>
-        💎 Ngọc: <span id="score">0</span>/5
-        <div id="task">Hãy tìm ngọc trong khu rừng!</div>
+  <div id="hud">
+    <div class="badge" id="levelHud">MÀN 1/5</div>
+    <div class="badge" id="gemHud">💎 Đá quý: 0/5</div>
+    <div class="badge" id="scoreHud">⭐ Điểm: 0</div>
+    <div class="badge" id="timeHud">⏱ 90 giây</div>
+  </div>
+  <div id="toast"></div>
+  <div id="overlay">
+    <div class="panel" id="panel"></div>
+  </div>
+  <div id="controls">
+    <div class="pad">
+      <button class="up" data-move="forward">↑</button>
+      <button class="left" data-move="left">←</button>
+      <button class="down" data-move="back">↓</button>
+      <button class="right" data-move="right">→</button>
     </div>
-
-    <div id="menu">
-      <div class="panel">
-        <h1>🌳 GIẢI CỨU THẾ GIỚI</h1>
-        <p>Khu rừng đang cần em giúp đỡ! Thu thập 5 viên ngọc để hồi sinh Cây Cổ Thụ.</p>
-        <input id="nameInput" maxlength="18" placeholder="Nhập tên nhân vật">
-        <p>Chọn nhân vật:</p>
-        <button onclick="choose('male')" id="maleBtn">🧑 Nam</button>
-        <button onclick="choose('female')" id="femaleBtn">👩 Nữ</button>
-        <p id="selectedText">Đã chọn: Nam</p>
-        <button onclick="startGame()">BẮT ĐẦU PHIÊU LƯU</button>
-      </div>
+    <div class="action">
+      <button id="hintBtn">💡 Gợi ý</button>
+      <button id="pauseBtn">Ⅱ Tạm dừng</button>
     </div>
-
-    <div id="question">
-      <div class="panel">
-        <h1>🗝️ Thử thách rương báu</h1>
-        <p id="qText"></p>
-        <div id="answers"></div>
-        <div id="message"></div>
-        <button id="continueBtn" style="display:none" onclick="closeQuestion()">Tiếp tục</button>
-      </div>
-    </div>
-
-    <div id="win">
-      <div class="panel">
-        <h1>🌟 BẠN ĐÃ GIẢI CỨU THẾ GIỚI THÀNH CÔNG!</h1>
-        <p>Cây Cổ Thụ đã hồi sinh. Khu rừng lại xanh tươi nhờ em!</p>
-        <button onclick="location.reload()">Chơi lại</button>
-      </div>
-    </div>
-
-    <div id="controls">
-      <button class="pad" id="up">▲</button>
-      <button class="pad" id="down">▼</button>
-      <button class="pad" id="left">◀</button>
-      <button class="pad" id="right">▶</button>
-    </div>
-    <div id="hint">Dùng WASD hoặc phím mũi tên để di chuyển.</div>
+  </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
-const game = document.getElementById("game");
-const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x9bd4a0);
-scene.fog = new THREE.Fog(0x9bd4a0, 30, 125);
-
-const camera = new THREE.PerspectiveCamera(65, game.clientWidth/game.clientHeight, .1, 250);
-camera.position.set(0, 5, 9);
-
-const renderer = new THREE.WebGLRenderer({antialias:true});
-renderer.setSize(game.clientWidth, game.clientHeight);
-renderer.setPixelRatio(Math.min(devicePixelRatio, 1.7));
-renderer.shadowMap.enabled = true;
-renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-renderer.outputColorSpace = THREE.SRGBColorSpace;
-renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.15;
-game.prepend(renderer.domElement);
-
-scene.add(new THREE.HemisphereLight(0xdfffea, 0x37532a, 2.0));
-const sun = new THREE.DirectionalLight(0xfff1cf, 2.2);
-sun.position.set(-15, 30, 12);
-sun.castShadow = true;
-sun.shadow.mapSize.set(1024,1024);
-scene.add(sun);
-
-const mat = (color, roughness=.85, metalness=0) =>
-    new THREE.MeshStandardMaterial({color, roughness, metalness});
-
-const grassMat = mat(0x477e3a);
-const pathMat = mat(0x9a8b67);
-const woodMat = mat(0x765035);
-const leafMat = mat(0x267744);
-const leafLight = mat(0x3b9650);
-const goldMat = mat(0xf0c34d, .35, .45);
-
-function box(parent, x,y,z, sx,sy,sz, material, cast=true) {
-    const mesh = new THREE.Mesh(new THREE.BoxGeometry(sx,sy,sz), material);
-    mesh.position.set(x,y,z);
-    mesh.castShadow = cast;
-    mesh.receiveShadow = true;
-    parent.add(mesh);
-    return mesh;
-}
-function sphere(parent,x,y,z,sx,sy,sz,material) {
-    const mesh = new THREE.Mesh(new THREE.SphereGeometry(1,12,10),material);
-    mesh.position.set(x,y,z);
-    mesh.scale.set(sx,sy,sz);
-    mesh.castShadow=true;
-    parent.add(mesh);
-    return mesh;
-}
-function cylinder(parent,x,y,z,rt,rb,h,material,segments=10) {
-    const mesh = new THREE.Mesh(
-        new THREE.CylinderGeometry(rt,rb,h,segments),material
-    );
-    mesh.position.set(x,y,z);
-    mesh.castShadow=true;
-    mesh.receiveShadow=true;
-    parent.add(mesh);
-    return mesh;
-}
-
-// Ground
-const ground = new THREE.Mesh(new THREE.PlaneGeometry(180,220),grassMat);
-ground.rotation.x=-Math.PI/2;
-ground.position.set(0,-.08,-40);
-ground.receiveShadow=true;
-scene.add(ground);
-
-// A narrow winding path, fixed in the forest
-const pathPoints = [];
-for(let i=0;i<=36;i++){
-    const z=18-i*3.1;
-    const x=Math.sin(i*.25)*4.2;
-    pathPoints.push(new THREE.Vector3(x,.015,z));
-}
-const pathCurve = new THREE.CatmullRomCurve3(pathPoints);
-const pathShape = new THREE.Shape();
-pathShape.moveTo(-1.8,0);
-pathShape.lineTo(1.8,0);
-pathShape.lineTo(1.8,-1);
-pathShape.lineTo(-1.8,-1);
-const pathGeo = new THREE.BufferGeometry();
-const verts=[];
-for(let i=0;i<pathPoints.length-1;i++){
-    const a=pathPoints[i], b=pathPoints[i+1];
-    const dx=b.x-a.x, dz=b.z-a.z;
-    const len=Math.hypot(dx,dz);
-    const nx=-dz/len*1.8, nz=dx/len*1.8;
-    verts.push(a.x+nx,.012,a.z+nz, a.x-nx,.012,a.z-nz,
-               b.x+nx,.012,b.z+nz,
-               a.x-nx,.012,a.z-nz, b.x-nx,.012,b.z-nz,
-               b.x+nx,.012,b.z+nz);
-}
-pathGeo.setAttribute('position',new THREE.Float32BufferAttribute(verts,3));
-pathGeo.computeVertexNormals();
-const pathMesh = new THREE.Mesh(pathGeo,new THREE.MeshStandardMaterial({
-    color:0x9c8c69, side:THREE.DoubleSide, roughness:1
-}));
-pathMesh.receiveShadow=true;
-scene.add(pathMesh);
-
-// Trees: simple but layered shapes
-function tree(x,z,scale=1,ancient=false){
-    const g=new THREE.Group();
-    g.position.set(x,0,z);
-    g.scale.setScalar(scale);
-    scene.add(g);
-    cylinder(g,0,1.6,0,.42,.58,3.2,woodMat,9);
-
-    const leafA=ancient?mat(0x51452d):leafMat;
-    const leafB=ancient?mat(0x665537):leafLight;
-    sphere(g,0,3.4,0,1.65,1.55,1.5,leafA);
-    sphere(g,-.85,3.05,.05,.95,1.05,1.0,leafB);
-    sphere(g,.8,3.15,-.12,1.05,1.0,1.0,leafA);
-    sphere(g,.05,4.15,-.15,1.1,1.05,1.05,leafB);
-
-    if(ancient){
-        // Bare branches make the ancient tree look withered
-        for(let i=0;i<4;i++){
-            const branch=cylinder(g,0,0,0,.10,.16,2.0,woodMat,7);
-            branch.position.set((i-1.5)*.42,2.8,-.1);
-            branch.rotation.z=(i-1.5)*-.38;
-        }
-    }
-    return g;
-}
-
-let seed=7831;
-function rand(){seed=(seed*1664525+1013904223)>>>0;return seed/4294967296;}
-
-for(let i=0;i<300;i++){
-    const x=(rand()-.5)*100;
-    const z=rand()*-120+18;
-    if(Math.abs(x)<7 && z<18 && z>-90) continue;
-    tree(x,z,.75+rand()*.75);
-}
-
-// Ancient tree stays fixed
-const ancientTree=tree(0,-91,2.6,true);
-
-// A soft upward beam appears when the tree is restored
-const beamMat=new THREE.MeshBasicMaterial({
-    color:0xc8ffb5, transparent:true, opacity:.0,
-    side:THREE.DoubleSide, depthWrite:false
-});
-const beam=new THREE.Mesh(new THREE.CylinderGeometry(.2,2.2,17,20,1,true),beamMat);
-beam.position.set(0,12,-91);
-scene.add(beam);
-
-// Character model: improved details, still low-poly and lightweight
-let gender='male';
-let player, bodyParts={};
-let playerX=0, playerZ=13;
-let moving=false, gameStarted=false, gameWon=false;
-const keys={};
-let score=0;
-let chestOpen=[false,false];
-let questionOpen=false;
-let activeChest=-1;
-let usedQuestions=[];
-let restored=false;
-
-function makeCharacter(type){
-    const root=new THREE.Group();
-    const skin=mat(type==='female'?0xe9b88e:0xd9a579);
-    const hair=mat(type==='female'?0x4a2c20:0x493020);
-    const shirt=mat(type==='female'?0xe45f78:0x367fc0);
-    const pants=mat(type==='female'?0x394c76:0x34455b);
-    const boots=mat(0x513624);
-    const dark=mat(0x33251e);
-    const eye=mat(0x211a15,.5);
-    const white=mat(0xffffff,.35);
-
-    // Legs and boots
-    const leftLeg=box(root,-.19,.55,0,.22,.72,.25,pants);
-    const rightLeg=box(root,.19,.55,0,.22,.72,.25,pants);
-    box(root,-.19,.17,.07,.25,.18,.38,boots);
-    box(root,.19,.17,.07,.25,.18,.38,boots);
-
-    // Body and simple clothing details
-    box(root,0,1.28,0,.72,.88,.4,shirt);
-    box(root,0,.88,0,.73,.12,.42,mat(0x533b2a));
-    box(root,0,.87,.02,.12,.15,.44,goldMat);
-
-    // Arms, sleeves and hands
-    const leftArm=box(root,-.48,1.35,0,.22,.66,.25,shirt);
-    const rightArm=box(root,.48,1.35,0,.22,.66,.25,shirt);
-    sphere(root,-.48,1.0,0,.13,.14,.13,skin);
-    sphere(root,.48,1.0,0,.13,.14,.13,skin);
-
-    // Neck and head
-    cylinder(root,0,1.77,0,.12,.13,.22,skin,10);
-    sphere(root,0,2.08,0,.36,.4,.32,skin);
-
-    // Hair cap
-    sphere(root,0,2.30,-.015,.375,.25,.35,hair);
-    if(type==='male'){
-        sphere(root,-.20,2.25,.22,.16,.12,.12,hair);
-        sphere(root,.12,2.34,.20,.18,.11,.12,hair);
-    }else{
-        // Long hair down the back and sides
-        sphere(root,0,2.04,-.24,.39,.48,.22,hair);
-        sphere(root,-.32,2.02,.01,.13,.42,.16,hair);
-        sphere(root,.32,2.02,.01,.13,.42,.16,hair);
-        sphere(root,-.17,2.32,.08,.20,.14,.20,hair);
-    }
-
-    // Eyes and eyebrows visible from the front
-    sphere(root,-.13,2.10,.294,.045,.055,.025,white);
-    sphere(root,.13,2.10,.294,.045,.055,.025,white);
-    sphere(root,-.13,2.10,.315,.021,.032,.014,eye);
-    sphere(root,.13,2.10,.315,.021,.032,.014,eye);
-    box(root,-.13,2.19,.29,.10,.025,.035,dark);
-    box(root,.13,2.19,.29,.10,.025,.035,dark);
-    sphere(root,0,2.00,.32,.07,.035,.03,skin);
-
-    // Small backpack
-    box(root,0,1.35,-.27,.42,.52,.18,mat(0x98613b));
-    box(root,0,1.49,-.37,.28,.17,.04,goldMat);
-
-    root.position.set(playerX,0,playerZ);
-    scene.add(root);
-    bodyParts={leftLeg,rightLeg,leftArm,rightArm};
-    return root;
-}
-
-function choose(type){
-    gender=type;
-    document.getElementById('selectedText').textContent=
-        'Đã chọn: '+(type==='male'?'Nam':'Nữ');
-    document.getElementById('maleBtn').style.outline=
-        type==='male'?'3px solid #d9a844':'none';
-    document.getElementById('femaleBtn').style.outline=
-        type==='female'?'3px solid #d9a844':'none';
-}
-
-function startGame(){
-    const name=document.getElementById('nameInput').value.trim()||'Nhà thám hiểm';
-    document.getElementById('playerName').textContent=name;
-    document.getElementById('menu').style.display='none';
-    if(player) scene.remove(player);
-    player=makeCharacter(gender);
-    gameStarted=true;
-}
-
-// Three collectible gems
-const gems=[];
-function makeGem(x,z,color){
-    const group=new THREE.Group();
-    group.position.set(x,.85,z);
-    const gemMat=new THREE.MeshStandardMaterial({
-        color, emissive:color, emissiveIntensity:.45,
-        metalness:.25, roughness:.25
-    });
-    const crystal=new THREE.Mesh(new THREE.OctahedronGeometry(.42,0),gemMat);
-    crystal.scale.set(.8,1.25,.8);
-    crystal.castShadow=true;
-    group.add(crystal);
-    const ring=new THREE.Mesh(
-        new THREE.TorusGeometry(.58,.025,6,24),
-        new THREE.MeshBasicMaterial({color:0xd9ffe4})
-    );
-    ring.rotation.x=Math.PI/2;
-    group.add(ring);
-    scene.add(group);
-    gems.push({group,x,z,got:false});
-}
-makeGem(-12,-12,0x43ff99);
-makeGem(13,-34,0x4da8ff);
-makeGem(-10,-60,0xff5c91);
-
-// Two detailed treasure chests
-const chests=[];
-function makeChest(x,z,index){
-    const g=new THREE.Group();
-    g.position.set(x,0,z);
-
-    const wood=mat(0x754525);
-    const woodLight=mat(0x9a6136);
-    const darkMetal=mat(0x493d2d,.4,.35);
-
-    // Base and layered front boards
-    box(g,0,.42,0,1.25,.72,.82,wood);
-    box(g,0,.25,.425,1.20,.10,.055,woodLight);
-    box(g,0,.48,.425,1.20,.10,.055,woodLight);
-    box(g,0,.70,.425,1.20,.10,.055,woodLight);
-
-    // Gold corner strips and bands
-    for(const xSide of [-.55,.55]){
-        box(g,xSide,.43,.46,.09,.76,.08,goldMat);
-        box(g,xSide,.43,-.42,.09,.76,.08,goldMat);
-    }
-    box(g,0,.10,.46,1.20,.09,.08,goldMat);
-    box(g,0,.77,.46,1.20,.09,.08,goldMat);
-
-    // Curved-looking lid made from layered segments
-    const lid=box(g,0,.89,-.02,1.24,.32,.84,woodLight);
-    lid.rotation.x=-.12;
-    box(g,0,.93,.405,1.14,.09,.07,goldMat);
-
-    // Front lock
-    box(g,0,.49,.50,.22,.27,.09,goldMat);
-    const lockRing=new THREE.Mesh(
-        new THREE.TorusGeometry(.065,.018,7,14),
-        goldMat
-    );
-    lockRing.position.set(0,.49,.56);
-    g.add(lockRing);
-
-    // Small glowing jewel on the lid
-    sphere(g,0,1.12,0,.12,.13,.12,mat(0x79fff0,.25,.3));
-
-    g.position.set(x,0,z);
-    scene.add(g);
-    chests.push({group:g,x,z,index,lid,opened:false});
-}
-makeChest(12,-70,0);
-makeChest(5,4,1);
-
-// Six school questions
+(function(){
+const $=id=>document.getElementById(id);
+const panel=$('panel'), overlay=$('overlay');
+const levels=[
+ {name:"Rừng Ngọc Lục Bảo",subtitle:"Đá Quý Sự Sống",
+  intro:"Chào mừng nhà thám hiểm! Hãy khám phá khu rừng, tìm 3 mảnh bản đồ phát sáng rồi thu thập Đá Quý Sự Sống. Cẩn thận với những ngã rẽ đánh lừa!",
+  hint:"Tìm các vật phẩm phát sáng dọc con đường. Viên đá quý chỉ xuất hiện khi em thu thập đủ 3 mảnh bản đồ.",
+  sky:0x9bd9a5,ground:0x356c3b,path:0x8c7955,leaf:0x247342,crystal:0x50ff9d,time:90},
+ {name:"Thung Lũng Thủy Tinh",subtitle:"Đá Quý Nguồn Nước",
+  intro:"Dòng sông đã chắn mất lối đi! Hãy thu thập 3 dấu ấn nước, quan sát những phiến đá và tìm đường sang bờ bên kia để lấy viên đá quý.",
+  hint:"Đi theo các dấu ấn xanh dương. Hãy tránh những vật cản quanh bờ sông.",
+  sky:0x9bd9ef,ground:0x547d76,path:0x8faaa6,leaf:0x348c87,crystal:0x4ddfff,time:85},
+ {name:"Tàn Tích Ánh Sáng",subtitle:"Đá Quý Ánh Sáng",
+  intro:"Ngôi đền cổ chỉ mở cửa cho người giải được câu đố. Tìm 3 cổ tự phát sáng, sau đó trả lời chính xác 3 câu hỏi liên tiếp để lấy Đá Quý Ánh Sáng.",
+  hint:"Tìm đủ 3 cổ tự trước. Khi câu đố xuất hiện, đọc kỹ câu hỏi rồi chọn đáp án.",
+  sky:0xd9bd80,ground:0x68634d,path:0x95856a,leaf:0x526c40,crystal:0xffdb62,time:100},
+ {name:"Thung Lũng Bão Gió",subtitle:"Đá Quý Gió",
+  intro:"Gió mạnh đang cản đường! Thu thập 3 dấu ấn gió, né những chướng ngại vật và tìm Đá Quý Gió. Em chỉ được va chạm tối đa 3 lần.",
+  hint:"Quan sát trước khi di chuyển. Đừng chạy thẳng vào những chướng ngại vật lớn.",
+  sky:0x9baacb,ground:0x5d695f,path:0x8b8d83,leaf:0x566d63,crystal:0xd7e8ff,time:80},
+ {name:"Thánh Địa Hy Vọng",subtitle:"Đá Quý Hy Vọng",
+  intro:"Đây là thử thách cuối cùng! Thu thập 3 dấu ấn, ghi nhớ chuỗi biểu tượng bí mật và hoàn thành câu đố để lấy viên đá cuối cùng. Cây Cổ Thụ đang chờ em!",
+  hint:"Tìm đủ 3 dấu ấn trước. Hãy quan sát thật kỹ chuỗi biểu tượng khi thử thách trí nhớ xuất hiện.",
+  sky:0x4d557e,ground:0x344c42,path:0x756b69,leaf:0x247a5b,crystal:0xffdf78,time:100}
+];
 const questions=[
- {q:"Dấu hiệu nào sau đây không phải là dấu hiệu nhận biết hình bình hành?",
-  a:["Tứ giác có hai đường chéo vuông góc.","Tứ giác có các cạnh đối bằng nhau.","Tứ giác có các góc đối bằng nhau.","Tứ giác có hai đường chéo cắt nhau tại trung điểm mỗi đường."],c:0},
- {q:"Khối lượng nguyên tử của nguyên tố Sulfur (lưu huỳnh) xấp xỉ bằng bao nhiêu amu?",
-  a:["40 amu.","90 amu.","32 amu.","Không có đáp án đúng."],c:2},
- {q:"Công thức tính khối lượng riêng là gì?",
-  a:["D = V/m","D = m/V","D = m × V","D = m + V"],c:1},
- {q:"Kết quả phân tích đa thức x² − 9 thành nhân tử là gì?",
-  a:["(x − 3)²","(x − 9)(x + 1)","x(x − 9)","(x − 3)(x + 3)"],c:3},
- {q:"Đặc điểm nổi bật của khí hậu môi trường nhiệt đới là gì?",
-  a:["Nhiệt độ thấp quanh năm.","Băng tuyết quanh năm.","Mưa nhiều quanh năm, không có mùa khô.","Nhiệt độ cao, có sự thay đổi theo mùa."],c:3},
- {q:"Hệ cơ quan nào có chức năng vận chuyển oxygen và các chất dinh dưỡng đến tế bào?",
-  a:["Hệ tiêu hóa.","Hệ tuần hoàn.","Hệ hô hấp.","Hệ bài tiết."],c:1}
+ {q:"Đâu là công thức tính diện tích hình chữ nhật?",a:["Dài × rộng","Dài + rộng","Dài × 2 + rộng"],correct:0},
+ {q:"Nước sôi ở khoảng bao nhiêu độ C trong điều kiện thường?",a:["50°C","100°C","150°C"],correct:1},
+ {q:"Hành tinh nào được gọi là hành tinh đỏ?",a:["Sao Kim","Sao Hỏa","Sao Mộc"],correct:1}
 ];
 
-function openQuestion(chest){
-    if(questionOpen||chest.opened) return;
-    questionOpen=true;
-    activeChest=chest.index;
-    chest.opened=true;
+let scene,camera,renderer,clock,world,player;
+let objects=[],tokens=[],obstacles=[],gem=null,fragments=[];
+let running=false,mode="welcome",stage=0,totalScore=0,stageScore=0;
+let collected=0,gemCount=0,timeLeft=90,hits=0;
+let quizIndex=0,quizRun=0,memorized=[],memoryInput=[];
+let keys={},moving={},lastTime=0,toastTimer=null;
+let startedAt=0,checkpointStage=0;
+let playerSpeed=6;
+let playerGroup;
 
-    // Lift the lid a little
-    chest.lid.rotation.x=-.95;
-    chest.lid.position.y=1.04;
-
-    let choices=questions.map((q,i)=>i).filter(i=>!usedQuestions.includes(i));
-    if(choices.length===0) choices=questions.map((q,i)=>i);
-    const qi=choices[Math.floor(Math.random()*choices.length)];
-    usedQuestions.push(qi);
-    const q=questions[qi];
-
-    document.getElementById('qText').textContent=q.q;
-    document.getElementById('message').textContent='';
-    document.getElementById('continueBtn').style.display='none';
-    const holder=document.getElementById('answers');
-    holder.innerHTML='';
-
-    q.a.forEach((answer,i)=>{
-        const btn=document.createElement('button');
-        btn.className='choice';
-        btn.textContent=String.fromCharCode(65+i)+'. '+answer;
-        btn.onclick=()=>{
-            if(btn.dataset.done) return;
-            if(i===q.c){
-                btn.classList.add('correct');
-                document.getElementById('message').textContent='Chính xác! Em nhận được 1 viên ngọc! 💎';
-                document.getElementById('message').style.color='#087b38';
-                score++;
-                updateScore();
-                holder.querySelectorAll('button').forEach(b=>b.disabled=true);
-                document.getElementById('continueBtn').style.display='inline-block';
-                btn.dataset.done='yes';
-            }else{
-                btn.classList.add('wrong');
-                document.getElementById('message').textContent='Chưa đúng rồi, em thử lại nhé!';
-                document.getElementById('message').style.color='#b51e1e';
-            }
-        };
-        holder.appendChild(btn);
-    });
-    document.getElementById('question').style.display='flex';
+function init3D(){
+ scene=new THREE.Scene();
+ scene.background=new THREE.Color(0x9bd9a5);
+ scene.fog=new THREE.Fog(0x9bd9a5,22,75);
+ camera=new THREE.PerspectiveCamera(65,1,0.1,150);
+ renderer=new THREE.WebGLRenderer({antialias:true});
+ renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.7));
+ renderer.shadowMap.enabled=true;
+ renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+ renderer.outputEncoding=THREE.sRGBEncoding;
+ $('game').insertBefore(renderer.domElement,$('game').firstChild);
+ renderer.domElement.style.position="absolute";
+ renderer.domElement.style.inset="0";
+ renderer.domElement.style.zIndex="0";
+ scene.add(new THREE.HemisphereLight(0xeafff0,0x30432d,1.5));
+ const sun=new THREE.DirectionalLight(0xfff5d7,2.0);
+ sun.position.set(-8,18,10);sun.castShadow=true;
+ sun.shadow.mapSize.set(1024,1024);scene.add(sun);
+ clock=new THREE.Clock();
+ player=new THREE.Group();
+ buildPlayer();
+ scene.add(player);
+ resize();
+ window.addEventListener('resize',resize);
+ animate();
 }
-function closeQuestion(){
-    document.getElementById('question').style.display='none';
-    questionOpen=false;
-    activeChest=-1;
-    updateScore();
+function resize(){
+ if(!renderer)return;
+ const w=$('game').clientWidth,h=$('game').clientHeight;
+ renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();
 }
-function updateScore(){
-    document.getElementById('score').textContent=score;
-    document.getElementById('task').textContent=
-        score>=5?'Hãy tìm Cây Cổ Thụ!':'Tìm ngọc và mở rương báu.';
+function mat(color,rough=0.9,metal=0){
+ return new THREE.MeshStandardMaterial({color,roughness:rough,metalness:metal});
 }
-
-// Movement controls
-function setKey(k,on){keys[k]=on;}
-window.addEventListener('keydown',e=>{
-    const k=e.key.toLowerCase();
-    if(['arrowup','arrowdown','arrowleft','arrowright',' '].includes(k)) e.preventDefault();
-    keys[k]=true;
-    if(questionOpen && ['a','b','c','d'].includes(k)){
-        const index=k.charCodeAt(0)-97;
-        const btn=document.querySelectorAll('#answers button')[index];
-        if(btn) btn.click();
+function box(group,x,y,z,sx,sy,sz,color){
+ const m=new THREE.Mesh(new THREE.BoxGeometry(sx,sy,sz),mat(color));
+ m.position.set(x,y,z);m.castShadow=true;m.receiveShadow=true;group.add(m);return m;
+}
+function sphere(group,x,y,z,r,color){
+ const m=new THREE.Mesh(new THREE.SphereGeometry(r,16,12),mat(color));
+ m.position.set(x,y,z);m.castShadow=true;group.add(m);return m;
+}
+function buildPlayer(){
+ playerGroup=new THREE.Group();
+ const body=new THREE.Mesh(new THREE.CapsuleGeometry(0.38,0.75,4,8),mat(0x3b78d8));
+ body.position.y=1.05;body.castShadow=true;playerGroup.add(body);
+ const head=sphere(playerGroup,0,1.85,0,0.32,0xffd1a3);
+ const hair=sphere(playerGroup,0,2.04,-0.04,0.30,0x493323);
+ hair.scale.set(1,0.5,1);
+ const eyeMat=mat(0x202020);
+ for(const x of [-0.11,0.11]){
+  const eye=new THREE.Mesh(new THREE.SphereGeometry(0.035,8,8),eyeMat);
+  eye.position.set(x,1.88,0.28);playerGroup.add(eye);
+ }
+ for(const x of [-0.18,0.18]){
+  const arm=new THREE.Mesh(new THREE.CapsuleGeometry(0.11,0.48,3,6),mat(0xffd1a3));
+  arm.position.set(x,1.13,0);arm.rotation.z=x<0?-0.15:0.15;playerGroup.add(arm);
+  const leg=new THREE.Mesh(new THREE.CapsuleGeometry(0.13,0.45,3,6),mat(0x243c55));
+  leg.position.set(x*0.65,0.35,0);playerGroup.add(leg);
+ }
+ player.add(playerGroup);
+}
+function clearWorld(){
+ if(world)scene.remove(world);
+ world=new THREE.Group();scene.add(world);
+ objects=[];tokens=[];obstacles=[];fragments=[];gem=null;
+}
+function addTree(x,z,size,leafColor){
+ const trunk=new THREE.Mesh(new THREE.CylinderGeometry(0.22*size,0.36*size,2.4*size,8),mat(0x60452d));
+ trunk.position.set(x,1.2*size,z);trunk.castShadow=true;world.add(trunk);
+ for(let i=0;i<3;i++){
+  const crown=new THREE.Mesh(new THREE.ConeGeometry((1.15-i*0.15)*size,1.7*size,8),mat(leafColor));
+  crown.position.set(x,(2.4+i*0.65)*size,z);crown.castShadow=true;world.add(crown);
+ }
+}
+function addCrystal(x,z,color,kind){
+ const group=new THREE.Group();
+ const crystal=new THREE.Mesh(new THREE.OctahedronGeometry(0.42,0),new THREE.MeshStandardMaterial({
+  color,emissive:color,emissiveIntensity:0.55,metalness:0.2,roughness:0.25
+ }));
+ crystal.position.y=0.8;crystal.rotation.y=0.3;crystal.castShadow=true;group.add(crystal);
+ const ring=new THREE.Mesh(new THREE.TorusGeometry(0.55,0.035,8,24),mat(color,0.3,0.4));
+ ring.rotation.x=Math.PI/2;ring.position.y=0.35;group.add(ring);
+ group.position.set(x,0,z);group.userData={kind,baseY:0};
+ world.add(group);objects.push(group);
+ if(kind==="token")tokens.push(group);
+ if(kind==="fragment")fragments.push(group);
+ if(kind==="gem")gem=group;
+ return group;
+}
+function addObstacle(x,z,color,kind){
+ let m;
+ if(kind==="rock"){
+  m=new THREE.Mesh(new THREE.DodecahedronGeometry(0.8,0),mat(color));
+  m.position.set(x,0.55,z);
+ }else if(kind==="log"){
+  m=new THREE.Mesh(new THREE.CylinderGeometry(0.3,0.35,2.4,8),mat(0x6d492d));
+  m.position.set(x,0.35,z);m.rotation.z=Math.PI/2;
+ }else{
+  m=new THREE.Mesh(new THREE.ConeGeometry(0.65,1.8,7),mat(color));
+  m.position.set(x,0.9,z);
+ }
+ m.castShadow=true;world.add(m);obstacles.push(m);
+}
+function buildWorld(){
+ clearWorld();
+ const L=levels[stage];
+ scene.background=new THREE.Color(L.sky);scene.fog.color=new THREE.Color(L.sky);
+ scene.fog.near=25;scene.fog.far=70;
+ const ground=new THREE.Mesh(new THREE.PlaneGeometry(100,110),mat(L.ground));
+ ground.rotation.x=-Math.PI/2;ground.position.set(0,-0.08,-15);
+ ground.receiveShadow=true;world.add(ground);
+ // winding path segments
+ const pts=[[-1,12],[0,6],[0,-1],[2,-7],[-1,-13],[1,-20],[0,-27]];
+ for(let i=0;i<pts.length-1;i++){
+  const a=pts[i],b=pts[i+1];
+  const dx=b[0]-a[0],dz=b[1]-a[1];
+  const len=Math.sqrt(dx*dx+dz*dz);
+  const road=new THREE.Mesh(new THREE.BoxGeometry(3.7,0.08,len),mat(L.path));
+  road.position.set((a[0]+b[0])/2,0,(a[1]+b[1])/2);
+  road.rotation.y=Math.atan2(dx,dz);world.add(road);
+ }
+ // landscape differs by stage
+ if(stage===1){
+  const water=new THREE.Mesh(new THREE.BoxGeometry(18,0.08,5),new THREE.MeshStandardMaterial({color:0x248eb4,roughness:0.25,metalness:0.25}));
+  water.position.set(0,0.02,-7);world.add(water);
+  for(let i=0;i<5;i++){
+   const rock=new THREE.Mesh(new THREE.CylinderGeometry(0.65,0.7,0.25,8),mat(0xb5c7c3));
+   rock.position.set(-3+i*1.5,0.18,-7+(i%2)*1.3);world.add(rock);
+  }
+ }
+ if(stage===2){
+  for(let i=0;i<4;i++){
+   box(world,-2.4+i*1.6,1.2,-9,0.35,2.4,0.35,0x76664c);
+   box(world,-2.4+i*1.6,2.4,-9,0.35,0.3,0.35,0xb59a63);
+  }
+  // temple entrance
+  box(world,-2,1.5,-18,0.5,3,0.6,0x706b52);
+  box(world,2,1.5,-18,0.5,3,0.6,0x706b52);
+  box(world,0,3,-18,4.5,0.45,0.7,0x857758);
+ }
+ if(stage===3){
+  for(let i=0;i<4;i++)addObstacle((i%2===0?-2.4:2.4),-5-i*4,0x84948b,i%2===0?"log":"rock");
+ }
+ if(stage===4){
+  // ancient tree in the distance
+  const trunk=new THREE.Mesh(new THREE.CylinderGeometry(0.8,1.4,8,12),mat(0x66503b));
+  trunk.position.set(0,4,-26);trunk.castShadow=true;world.add(trunk);
+  const crown=new THREE.Mesh(new THREE.SphereGeometry(4,14,12),mat(0x3cae6c));
+  crown.position.set(0,8,-26);crown.castShadow=true;world.add(crown);
+  for(let i=0;i<4;i++)addCrystal(-2+i*1.3,-23,0x9effb5,"decoration");
+ }
+ // trees / vegetation along sides
+ for(let i=0;i<32;i++){
+  const side=i%2===0?-1:1;
+  const x=side*(4.3+(i%4)*1.5);
+  const z=10-Math.floor(i/2)*2.7;
+  addTree(x,z,0.8+(i%3)*0.18,L.leaf);
+ }
+ // rocks and flowers
+ for(let i=0;i<12;i++){
+  const x=(i%2===0?-1:1)*(3.8+(i%3)*0.7);
+  const z=5-i*2.4;
+  sphere(world,x,0.16,z,0.22,stage===1?0x7bc8e8:0xc4d99a);
+ }
+ player.position.set(0,0,10);
+ // 3 collectibles before crystal
+ const tokenColor=[0x9dffb0,0x58dfff,0xffd85d,0xd7e8ff,0xffc9ff][stage];
+ const tokenPositions=[[-2.1,2],[2.1,-3],[-1.8,-11]];
+ tokenPositions.forEach((p,i)=>addCrystal(p[0],p[1],tokenColor,"token"));
+ collected=0;hits=0;gem=null;
+ // crystal appears only after challenge is completed
+ updateHUD();
+}
+function showPanel(html){
+ panel.innerHTML=html;overlay.style.display="flex";
+}
+function hidePanel(){overlay.style.display="none";}
+function welcome(){
+ mode="welcome";running=false;
+ $('hud').style.display="none";$('controls').style.display="none";
+ showPanel(`
+  <div style="font-size:52px">🌳💎✨</div>
+  <h1>GIẢI CỨU THẾ GIỚI</h1>
+  <p>Một thế lực bí ẩn đang khiến Cây Cổ Thụ héo úa. Hãy vượt qua 5 vùng đất, tìm đủ 5 viên đá quý và khôi phục sự sống cho khu rừng!</p>
+  <p>🎮 Di chuyển bằng WASD, phím mũi tên hoặc các nút điều khiển trên màn hình.</p>
+  <button class="primary" id="startBtn">🌿 BẮT ĐẦU PHIÊU LƯU</button>
+  <p class="small">Đồ họa 3D • 5 màn chơi • Điểm thưởng • Thử thách kiến thức</p>
+ `);
+ $('startBtn').onclick=()=>{stage=0;totalScore=0;gemCount=0;introStage();};
+}
+function introStage(){
+ mode="intro";running=false;
+ $('hud').style.display="none";$('controls').style.display="none";
+ const L=levels[stage];
+ showPanel(`
+  <div style="font-size:42px">${["🌳","💧","🏛️","🌬️","✨"][stage]}</div>
+  <p class="small">CHẶNG ${stage+1} / 5</p>
+  <h2>${L.name}</h2>
+  <p><b>Nhiệm vụ: ${L.subtitle}</b></p>
+  <p>${L.intro}</p>
+  <div class="stat"><span>Thời gian</span><b>${L.time} giây</b></div>
+  <div class="stat"><span>Vật phẩm cần tìm</span><b>3 dấu ấn + 1 đá quý</b></div>
+  <button class="primary" id="beginBtn">▶ BẮT ĐẦU MÀN CHƠI</button>
+ `);
+ $('beginBtn').onclick=beginStage;
+}
+function beginStage(){
+ buildWorld();
+ stageScore=0;timeLeft=levels[stage].time;startedAt=performance.now();
+ mode="playing";running=true;
+ $('hud').style.display="flex";$('controls').style.display="flex";
+ hidePanel();updateHUD();
+}
+function updateHUD(){
+ $('levelHud').textContent=`MÀN ${stage+1}/5 · ${levels[stage].name}`;
+ $('gemHud').textContent=`💎 Đá quý: ${gemCount}/5`;
+ $('scoreHud').textContent=`⭐ Điểm: ${totalScore+stageScore}`;
+ $('timeHud').textContent=`⏱ ${Math.max(0,Math.ceil(timeLeft))} giây`;
+}
+function showToast(msg){
+ const t=$('toast');t.textContent=msg;t.style.display="block";
+ clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.style.display="none",2300);
+}
+function spawnGem(){
+ if(gem)return;
+ addCrystal(0,-22,levels[stage].crystal,"gem");
+ showToast("✨ Đã thu thập đủ 3 dấu ấn! Viên đá quý đã xuất hiện.");
+ if(stage===2){quizRun=0;setTimeout(showQuiz,350);}
+ if(stage===4){setTimeout(showMemory,350);}
+}
+function showQuiz(){
+ running=false;mode="quiz";
+ const q=questions[quizRun%questions.length];
+ showPanel(`<div style="font-size:38px">🏛️</div><h2>CÂU ĐỐ ${quizRun+1}/3</h2>
+ <p>${q.q}</p><div class="answers">${q.a.map((a,i)=>`<button data-answer="${i}">${a}</button>`).join("")}</div>
+ <p class="small">Trả lời đúng cả 3 câu để mở khóa viên đá quý.</p>`);
+ panel.querySelectorAll('[data-answer]').forEach(b=>b.onclick=()=>{
+  if(Number(b.dataset.answer)===q.correct){
+   quizRun++;stageScore+=10;
+   if(quizRun>=3){hidePanel();running=true;mode="playing";showToast("Cửa đền đã mở! Hãy lấy viên đá quý.");}
+   else showQuiz();
+  }else{
+   showToast("Chưa đúng rồi! Thử lại câu này nhé.");
+  }
+  updateHUD();
+ });
+}
+function showMemory(){
+ running=false;mode="memory";
+ const colors=["🔴","🔵","🟡","🟢"];
+ memorized=Array.from({length:4},()=>Math.floor(Math.random()*4));
+ memoryInput=[];
+ showPanel(`<div style="font-size:38px">🧠</div><h2>THỬ THÁCH TRÍ NHỚ</h2>
+ <p>Ghi nhớ chuỗi biểu tượng này, sau đó nhập lại đúng thứ tự!</p>
+ <h1 id="sequence">${memorized.map(n=>colors[n]).join(" ")}</h1>
+ <button id="readyMemory" class="primary">ĐÃ GHI NHỚ — BẮT ĐẦU</button>`);
+ $('readyMemory').onclick=()=>{
+  showPanel(`<h2>NHẬP LẠI CHUỖI</h2><p>Chọn đúng 4 biểu tượng theo thứ tự.</p>
+  <div class="answers" style="grid-template-columns:1fr 1fr">${colors.map((c,i)=>`<button data-color="${i}">${c}</button>`).join("")}</div>
+  <p id="memoryProgress">Đã chọn: 0/4</p>`);
+  panel.querySelectorAll('[data-color]').forEach(b=>b.onclick=()=>{
+   memoryInput.push(Number(b.dataset.color));
+   $('memoryProgress').textContent=`Đã chọn: ${memoryInput.length}/4`;
+   if(memoryInput.length===4){
+    if(memoryInput.every((v,i)=>v===memorized[i])){
+     stageScore+=30;hidePanel();running=true;mode="playing";showToast("Tuyệt vời! Em đã vượt qua thử thách trí nhớ.");
+    }else{
+     memoryInput=[];showToast("Sai thứ tự rồi! Em được thử lại.");
+     $('memoryProgress').textContent="Đã chọn: 0/4";
     }
+   }
+  });
+ };
+}
+function completeStage(){
+ running=false;mode="results";
+ const bonus=Math.max(0,Math.floor(timeLeft/2));
+ stageScore+=40+bonus;
+ totalScore+=stageScore;gemCount++;
+ checkpointStage=stage+1;
+ $('hud').style.display="none";$('controls').style.display="none";
+ const isFinal=stage===4;
+ showPanel(`
+  <div style="font-size:48px">${isFinal?"🏆🌳✨":"💎🎉"}</div>
+  <h1>${isFinal?"GIẢI CỨU THẾ GIỚI!":"HOÀN THÀNH MÀN "+(stage+1)+"!"}</h1>
+  <h2>${isFinal?"Cây Cổ Thụ đã hồi sinh!":levels[stage].name}</h2>
+  <div class="score">+${stageScore} điểm</div>
+  <div class="stat"><span>Điểm màn này</span><b>${stageScore}</b></div>
+  <div class="stat"><span>Thưởng thời gian</span><b>${bonus} điểm</b></div>
+  <div class="stat"><span>Đá quý thu thập</span><b>${gemCount}/5</b></div>
+  <div class="stat"><span>Tổng điểm tích lũy</span><b>${totalScore}</b></div>
+  <p>${isFinal?"Em đã thu thập đủ 5 viên đá quý và cứu thế giới thành công!":"Em đã mở khóa vùng đất tiếp theo. Hãy sẵn sàng cho thử thách mới!"}</p>
+  <button class="primary" id="nextBtn">${isFinal?"🔄 CHƠI LẠI":"➡️ MÀN TIẾP THEO"}</button>
+ `);
+ $('nextBtn').onclick=()=>{
+  if(isFinal){stage=0;totalScore=0;gemCount=0;introStage();}
+  else{stage++;introStage();}
+ };
+}
+function failStage(reason){
+ running=false;mode="failed";
+ $('hud').style.display="none";$('controls').style.display="none";
+ showPanel(`<div style="font-size:42px">🌿</div><h2>${reason}</h2>
+ <p>Đừng lo! Em sẽ quay lại điểm lưu gần nhất. Những màn đã hoàn thành và điểm số của chúng vẫn được giữ nguyên.</p>
+ <div class="stat"><span>Điểm đã tích lũy</span><b>${totalScore}</b></div>
+ <button class="primary" id="retryBtn">↩️ QUAY LẠI ĐIỂM LƯU</button>`);
+ $('retryBtn').onclick=()=>introStage();
+}
+function pauseGame(){
+ if(mode==="playing"){
+  running=false;mode="paused";
+  showPanel(`<h2>TẠM DỪNG</h2><p>Nhà thám hiểm nghỉ một chút nhé!</p>
+  <button class="primary" id="resumeBtn">▶ TIẾP TỤC CHƠI</button>
+  <button id="exitBtn">Về màn hình đầu</button>`);
+  $('resumeBtn').onclick=()=>{hidePanel();mode="playing";running=true;};
+  $('exitBtn').onclick=welcome;
+ }
+}
+$('pauseBtn').onclick=pauseGame;
+$('hintBtn').onclick=()=>showToast(levels[stage].hint);
+
+function setMove(k,on){moving[k]=on;}
+document.querySelectorAll('[data-move]').forEach(btn=>{
+ const k=btn.dataset.move;
+ btn.addEventListener('pointerdown',e=>{e.preventDefault();setMove(k,true);});
+ ['pointerup','pointerleave','pointercancel'].forEach(ev=>btn.addEventListener(ev,()=>setMove(k,false)));
+});
+window.addEventListener('keydown',e=>{
+ const k=e.key.toLowerCase();
+ keys[k]=true;
+ if(["arrowup","arrowdown","arrowleft","arrowright"," "].includes(k))e.preventDefault();
+ if(k==="escape")pauseGame();
 });
 window.addEventListener('keyup',e=>keys[e.key.toLowerCase()]=false);
-
-function bindPad(id,key){
-    const el=document.getElementById(id);
-    el.addEventListener('pointerdown',e=>{e.preventDefault();keys[key]=true;el.setPointerCapture(e.pointerId);});
-    el.addEventListener('pointerup',()=>keys[key]=false);
-    el.addEventListener('pointercancel',()=>keys[key]=false);
-    el.addEventListener('lostpointercapture',()=>keys[key]=false);
+function isDown(name){
+ if(name==="forward")return keys.w||keys.arrowup||moving.forward;
+ if(name==="back")return keys.s||keys.arrowdown||moving.back;
+ if(name==="left")return keys.a||keys.arrowleft||moving.left;
+ if(name==="right")return keys.d||keys.arrowright||moving.right;
+ return false;
 }
-bindPad('up','arrowup');bindPad('down','arrowdown');
-bindPad('left','arrowleft');bindPad('right','arrowright');
-
-function dist(x1,z1,x2,z2){return Math.hypot(x1-x2,z1-z2);}
-
-const clock=new THREE.Clock();
+function updateGame(dt){
+ if(!running||mode!=="playing")return;
+ timeLeft-=dt;
+ if(timeLeft<=0){timeLeft=0;updateHUD();failStage("Hết thời gian!");return;}
+ let dx=0,dz=0;
+ if(isDown("forward"))dz-=1;
+ if(isDown("back"))dz+=1;
+ if(isDown("left"))dx-=1;
+ if(isDown("right"))dx+=1;
+ if(dx||dz){
+  const n=Math.sqrt(dx*dx+dz*dz);dx/=n;dz/=n;
+  player.position.x+=dx*playerSpeed*dt;
+  player.position.z+=dz*playerSpeed*dt;
+  player.rotation.y=Math.atan2(dx,dz)+Math.PI;
+  playerGroup.position.y=Math.abs(Math.sin(performance.now()*0.012))*0.06;
+ }
+ player.position.x=Math.max(-7,Math.min(7,player.position.x));
+ player.position.z=Math.max(-29,Math.min(11,player.position.z));
+ // animate collectibles
+ for(const o of objects){
+  if(o.userData.kind!=="decoration"){
+   o.rotation.y+=dt*1.2;
+   o.position.y=0.1+Math.sin(performance.now()*0.003+o.position.z)*0.12;
+  }
+ }
+ // Collect tokens
+ for(let i=tokens.length-1;i>=0;i--){
+  const o=tokens[i];
+  if(!o.parent)continue;
+  if(player.position.distanceTo(o.position)<1.35){
+   world.remove(o);tokens.splice(i,1);collected++;
+   stageScore+=20;showToast("✨ Đã tìm được dấu ấn "+collected+"/3!");
+   updateHUD();
+   if(collected>=3)spawnGem();
+  }
+ }
+ // obstacles can cause damage, with short collision cooldown
+ if(!window.hitCooldown)window.hitCooldown=0;
+ window.hitCooldown=Math.max(0,window.hitCooldown-dt);
+ for(const o of obstacles){
+  if(player.position.distanceTo(o.position)<1.1&&window.hitCooldown===0){
+   hits++;window.hitCooldown=1.2;showToast("Cẩn thận! Va chạm "+hits+"/3");
+   if(stage===3&&hits>=3){failStage("Em đã va chạm quá 3 lần!");return;}
+   player.position.z=Math.min(10,player.position.z+1.4);
+  }
+ }
+ if(gem&&gem.parent&&player.position.distanceTo(gem.position)<1.5){
+  if(stage===2&&quizRun<3)return;
+  if(stage===4&&mode==="memory")return;
+  world.remove(gem);gem=null;completeStage();return;
+ }
+ updateHUD();
+}
 function animate(){
-    requestAnimationFrame(animate);
-    const dt=Math.min(clock.getDelta(),.05);
-    const t=clock.elapsedTime;
-
-    if(gameStarted && player && !questionOpen && !gameWon){
-        let dx=0,dz=0;
-        if(keys['w']||keys['arrowup']) dz-=1;
-        if(keys['s']||keys['arrowdown']) dz+=1;
-        if(keys['a']||keys['arrowleft']) dx-=1;
-        if(keys['d']||keys['arrowright']) dx+=1;
-        moving=dx!==0||dz!==0;
-
-        if(moving){
-            const len=Math.hypot(dx,dz);
-            dx/=len;dz/=len;
-            playerX+=dx*7*dt;
-            playerZ+=dz*7*dt;
-            playerX=Math.max(-34,Math.min(34,playerX));
-            playerZ=Math.max(-102,Math.min(17,playerZ));
-            player.rotation.y=Math.atan2(dx,dz);
-            if(bodyParts.leftLeg){
-                bodyParts.leftLeg.rotation.x=Math.sin(t*10)*.45;
-                bodyParts.rightLeg.rotation.x=-Math.sin(t*10)*.45;
-                bodyParts.leftArm.rotation.x=-Math.sin(t*10)*.28;
-                bodyParts.rightArm.rotation.x=Math.sin(t*10)*.28;
-            }
-        }else if(bodyParts.leftLeg){
-            bodyParts.leftLeg.rotation.x=0;
-            bodyParts.rightLeg.rotation.x=0;
-            bodyParts.leftArm.rotation.x=0;
-            bodyParts.rightArm.rotation.x=0;
-        }
-        player.position.set(playerX,0,playerZ);
-
-        // Camera follows behind the character
-        const camTarget=new THREE.Vector3(playerX,3.8,playerZ+7.5);
-        camera.position.lerp(camTarget,1-Math.exp(-dt*4));
-        camera.lookAt(playerX,1.5,playerZ-4);
-
-        for(const gem of gems){
-            if(!gem.got && dist(playerX,playerZ,gem.x,gem.z)<1.8){
-                gem.got=true;
-                scene.remove(gem.group);
-                score++;
-                updateScore();
-            }
-            if(!gem.got){
-                gem.group.rotation.y+=dt*.8;
-                gem.group.position.y=.85+Math.sin(t*2+gem.x)*.12;
-            }
-        }
-
-        for(const chest of chests){
-            if(!chest.opened && dist(playerX,playerZ,chest.x,chest.z)<2.1){
-                openQuestion(chest);
-            }
-        }
-
-        if(score>=5){
-            document.getElementById('task').textContent='Đi đến Cây Cổ Thụ ở cuối rừng!';
-            if(dist(playerX,playerZ,0,-91)<7){
-                restored=true;
-                gameWon=true;
-                beamMat.opacity=.48;
-                ancientTree.traverse(obj=>{
-                    if(obj.material && obj.material.color &&
-                       obj.material.color.getHex()!==woodMat.color.getHex()){
-                        obj.material.color.lerp(new THREE.Color(0x4caf50),.75);
-                    }
-                });
-                document.getElementById('win').style.display='flex';
-            }
-        }
-    }
-
-    if(restored){
-        beamMat.opacity=.3+.15*Math.sin(t*2);
-    }
-    renderer.render(scene,camera);
+ requestAnimationFrame(animate);
+ const dt=Math.min(clock.getDelta(),0.05);
+ updateGame(dt);
+ if(player){
+  const target=new THREE.Vector3(player.position.x,player.position.y+1,player.position.z);
+  camera.position.lerp(new THREE.Vector3(player.position.x,player.position.y+5.2,player.position.z+8.5),0.09);
+  camera.lookAt(new THREE.Vector3(target.x,target.y+0.3,target.z-2));
+ }
+ if(renderer&&scene&&camera)renderer.render(scene,camera);
 }
-animate();
-
-window.addEventListener('resize',()=>{
-    camera.aspect=game.clientWidth/game.clientHeight;
-    camera.updateProjectionMatrix();
-    renderer.setSize(game.clientWidth,game.clientHeight);
-});
+init3D();
+welcome();
+})();
 </script>
 </div>
 </body>
 </html>
-'''
+"""
 
-components.html(game_code, height=800, scrolling=False)
+components.html(game_html, height=830, scrolling=False)
