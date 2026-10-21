@@ -106,7 +106,7 @@ button:disabled{opacity:.45;cursor:not-allowed}
   </div>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.min.js"></script>
 <script>
 (function(){
 const $=id=>document.getElementById(id);
