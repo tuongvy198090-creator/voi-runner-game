@@ -3,627 +3,488 @@ import streamlit as st
 import streamlit.components.v1 as components
 
 st.set_page_config(
-    page_title="Chim Cánh Cụt Vượt Sông Băng",
+    page_title="Phiêu lưu cùng chim cánh cụt",
     page_icon="🐧",
     layout="wide"
 )
 
-html = r"""
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+st.markdown("""
 <style>
-*{box-sizing:border-box}
-body{margin:0;font-family:Arial;background:#9ddfff}
-#game{height:740px;width:100%;position:relative;overflow:hidden;border-radius:14px}
-canvas{display:block}
-#hud{position:absolute;top:8px;left:2%;width:96%;z-index:2;pointer-events:none}
-#panel{background:#f1faffed;border:3px solid #83d2ff;border-radius:18px;
-padding:10px;text-align:center;color:#164a78;box-shadow:0 4px 12px #123e5b55}
-#progress{font-weight:bold;font-size:12px;color:#1384c8}
-#question{font-weight:bold;font-size:clamp(15px,2.4vw,23px);margin:7px 0}
-#answers{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
-.answer{border:2px solid white;background:#ffdc70;border-radius:12px;
-padding:10px 3px;font-size:clamp(12px,1.8vw,18px);font-weight:bold;color:#64410b}
-#message{margin:6px auto;background:#174d77eF;color:white;border-radius:12px;
-padding:7px 12px;text-align:center;font-size:14px;font-weight:bold;width:fit-content}
-#controls{position:absolute;bottom:12px;left:0;width:100%;z-index:3;
-display:flex;justify-content:space-between;align-items:end;padding:0 12px}
-.pad{display:grid;grid-template-columns:47px 47px 47px;grid-template-rows:47px 47px;gap:3px}
-.ctrl{width:47px;height:47px;border:2px solid white;border-radius:50%;
-background:#15558bdd;color:white;font-size:25px;touch-action:none}
-#jump{height:76px;width:76px;border:3px solid white;border-radius:50%;
-background:#ffb842;color:#593600;font-weight:bold;font-size:15px;touch-action:none}
-.overlay{position:absolute;inset:0;z-index:5;background:#10435feF;color:white;
-display:flex;flex-direction:column;align-items:center;justify-content:center;
-text-align:center;padding:22px}
-.overlay h1{font-size:clamp(25px,5vw,42px)}
-.overlay p{font-size:16px;line-height:1.65;max-width:620px}
-.bigbtn{background:#ffdf75;border:0;border-radius:14px;padding:14px 24px;
-font-size:20px;font-weight:bold;color:#5b400a;cursor:pointer}
-#end{display:none}
-@media(max-width:520px){
-#game{height:720px}
-#panel{padding:7px}
-.answer{padding:9px 1px;font-size:12px}
-#question{font-size:15px}
+.stApp {
+    background: linear-gradient(#d9f5ff, #eafaff);
+}
+.block-container {
+    padding-top: 1rem;
+    max-width: 1200px;
+}
+h1 {text-align:center; color:#164e75;}
+</style>
+""", unsafe_allow_html=True)
+
+st.title("🐧 HÀNH TRÌNH ĐI LẤY CÁ")
+st.caption("Giúp chim cánh cụt mẹ và chim con vượt qua dòng sông băng!")
+
+game = r"""
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+* {box-sizing:border-box}
+body {margin:0;font-family:Arial;background:#b8eaff;color:#12324b}
+#scene {width:100%;height:560px;position:relative;overflow:hidden;
+        border-radius:18px;background:#a5dcf3;border:3px solid white}
+canvas {display:block;width:100%;height:100%}
+#hud {position:absolute;top:10px;left:10px;right:10px;
+      display:flex;justify-content:space-between;gap:6px;flex-wrap:wrap;
+      pointer-events:none}
+.pill {background:#fffF; padding:9px 12px;border-radius:12px;
+       font-weight:bold;box-shadow:0 2px 5px #42657a44}
+#panel {position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+        width:min(90%,460px);background:#ffffffF5;padding:20px;
+        border-radius:20px;text-align:center;box-shadow:0 8px 25px #164e7544}
+#panel h2 {margin:0 0 10px;color:#145580}
+#answers {display:grid;grid-template-columns:1fr 1fr;gap:9px}
+button {border:0;border-radius:12px;padding:12px;background:#167bb5;
+        color:white;font-size:15px;font-weight:bold;cursor:pointer}
+button:active {transform:scale(.97)}
+button:disabled {opacity:.5}
+#message {font-weight:bold;min-height:24px;margin-top:10px}
+#controls {position:absolute;bottom:10px;left:10px;right:10px;
+           display:flex;justify-content:space-between;align-items:end;
+           pointer-events:none}
+.pad {display:grid;grid-template-columns:repeat(3,43px);gap:4px}
+.pad button,#jump {pointer-events:auto;background:#ffffffE8;color:#155477;
+                   border:2px solid #7bbbd7;font-size:19px;padding:8px}
+.pad .empty {visibility:hidden}
+#jump {border-radius:50%;width:65px;height:65px}
+#help {text-align:center;font-size:13px;padding:8px}
+@media(max-width:500px) {
+ #scene {height:510px}
+ #panel {padding:13px}
+ button {padding:10px;font-size:14px}
 }
 </style>
 </head>
 <body>
-<div id="game">
-<div id="hud">
- <div id="panel">
-  <div id="progress">🐧 CUỘC PHIÊU LƯU CỦA HAI MẸ CON</div>
-  <div id="question">Vượt sông băng để lấy xô cá!</div>
-  <div id="answers"></div>
- </div>
- <div id="message">Bấm BẮT ĐẦU để chơi</div>
+<div id="scene">
+  <div id="hud">
+    <div class="pill" id="stage">🐟 Chặng 1: Đi lấy cá</div>
+    <div class="pill" id="score">💎 0/5 hàng</div>
+    <div class="pill" id="lives">🧊 Băng yếu: 0/3</div>
+  </div>
+  <div id="panel">
+    <h2 id="title">🐧 Cuộc phiêu lưu bắt đầu!</h2>
+    <p id="question">Hãy giúp mẹ con chim cánh cụt vượt qua sông băng để lấy cá nhé!</p>
+    <div id="answers"></div>
+    <div id="message"></div>
+    <button id="start" onclick="startGame()">BẮT ĐẦU CHƠI ▶</button>
+  </div>
+  <div id="controls">
+    <div class="pad">
+      <button class="empty"> </button>
+      <button onclick="move(0,-1)">⬆️</button>
+      <button class="empty"> </button>
+      <button onclick="move(-1,0)">⬅️</button>
+      <button onclick="move(0,1)">⬇️</button>
+      <button onclick="move(1,0)">➡️</button>
+    </div>
+    <button id="jump" onclick="jump()">⬆</button>
+  </div>
 </div>
-<div id="controls">
- <div class="pad">
-  <div></div><button class="ctrl" data-key="up">▲</button><div></div>
-  <button class="ctrl" data-key="left">◀</button>
-  <button class="ctrl" data-key="down">▼</button>
-  <button class="ctrl" data-key="right">▶</button>
- </div>
- <button id="jump">NHẢY ⬆</button>
-</div>
-<div id="start" class="overlay">
- <h1>🐧 CHIM CÁNH CỤT VƯỢT SÔNG BĂNG</h1>
- <p>Giúp chim mẹ và chim con vượt 5 bức tường bằng cách trả lời câu hỏi.<br>
-Đến bờ bên kia, lấy xô cá rồi nhảy qua các tảng băng yếu để trở về.<br>
-Laptop: dùng WASD hoặc phím mũi tên, nhấn Space để nhảy.<br>
-Điện thoại: dùng các nút điều khiển ở phía dưới.</p>
- <button class="bigbtn" id="startBtn">BẮT ĐẦU CHƠI</button>
-</div>
-<div id="end" class="overlay">
- <h1 id="endTitle">🐟 HOÀN THÀNH!</h1>
- <p id="endText"></p>
- <button class="bigbtn" id="againBtn">CHƠI LẠI</button>
-</div>
+<div id="help">
+Dùng WASD hoặc phím mũi tên để di chuyển · Space để nhảy.
+Trên điện thoại, dùng các nút điều khiển.
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
 <script>
-(()=>{
-const root=document.getElementById("game");
-const questionEl=document.getElementById("question");
-const progressEl=document.getElementById("progress");
-const answersEl=document.getElementById("answers");
-const messageEl=document.getElementById("message");
-const startEl=document.getElementById("start");
-const endEl=document.getElementById("end");
+const sceneBox = document.getElementById('scene');
+const renderer = new THREE.WebGLRenderer({antialias:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+renderer.setSize(sceneBox.clientWidth,sceneBox.clientHeight);
+renderer.shadowMap.enabled=true;
+renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+renderer.outputColorSpace=THREE.SRGBColorSpace;
+sceneBox.prepend(renderer.domElement);
 
-if(!window.THREE){
- questionEl.textContent="Không tải được thư viện 3D. Hãy kiểm tra Internet rồi tải lại.";
- return;
+const world = new THREE.Scene();
+world.background = new THREE.Color(0x9bdcf6);
+world.fog = new THREE.Fog(0x9bdcf6, 35, 100);
+
+const camera = new THREE.PerspectiveCamera(
+  62, sceneBox.clientWidth/sceneBox.clientHeight, 0.1, 180
+);
+camera.position.set(0,5,10);
+
+world.add(new THREE.HemisphereLight(0xe5f8ff,0x547e9b,2.0));
+const sun = new THREE.DirectionalLight(0xffffff,2.7);
+sun.position.set(-8,18,8);
+sun.castShadow=true;
+sun.shadow.mapSize.set(1024,1024);
+world.add(sun);
+
+const mat=(color,roughness=.72,metalness=0)=>
+ new THREE.MeshStandardMaterial({color,roughness,metalness});
+const snow=mat(0xeaf8ff), ice=mat(0x8bd8f3,.23,.1);
+const iceTop=mat(0xc5f1ff,.2,.1), water=mat(0x078bc9,.22,.1);
+const wallMat=new THREE.MeshPhysicalMaterial({
+ color:0x9cecff,transparent:true,opacity:.43,
+ roughness:.12,metalness:.08,depthWrite:false
+});
+const dark=mat(0x202f40), white=mat(0xffffff), orange=mat(0xffa62b);
+const black=mat(0x111d2b), pink=mat(0xffa8c6);
+
+function box(w,h,d,material,x,y,z){
+ const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),material);
+ m.position.set(x,y,z);m.castShadow=true;m.receiveShadow=true;
+ world.add(m);return m;
 }
+function sphere(rx,ry,rz,material,x,y,z,parent){
+ const m=new THREE.Mesh(new THREE.SphereGeometry(1,24,18),material);
+ m.scale.set(rx,ry,rz);m.position.set(x,y,z);
+ m.castShadow=true;m.receiveShadow=true;
+ (parent||world).add(m);return m;
+}
+function cylinder(rt,rb,h,material,x,y,z,parent){
+ const m=new THREE.Mesh(new THREE.CylinderGeometry(rt,rb,h,20),material);
+ m.position.set(x,y,z);m.castShadow=true;
+ (parent||world).add(m);return m;
+}
+
+// Tạo nhân vật 3D tròn trịa, có mắt, mỏ, cánh và chân.
+function penguin(scale, baby=false){
+ const g=new THREE.Group();
+ const bodyMat=mat(baby?0x6a9fc3:0x253d58);
+ sphere(.48,.65,.39,bodyMat,0,.78,0,g).scale.multiplyScalar(scale);
+ sphere(.35,.48,.31,white,0,.72,.24,g).scale.multiplyScalar(scale);
+ sphere(.39,.39,.37,bodyMat,0,1.35,0,g).scale.multiplyScalar(scale);
+ sphere(.065,.075,.045,white,-.14,1.39,.325,g).scale.multiplyScalar(scale);
+ sphere(.065,.075,.045,white,.14,1.39,.325,g).scale.multiplyScalar(scale);
+ sphere(.03,.04,.025,black,-.13,1.39,.364,g).scale.multiplyScalar(scale);
+ sphere(.03,.04,.025,black,.15,1.39,.364,g).scale.multiplyScalar(scale);
+ const beak= new THREE.Mesh(new THREE.ConeGeometry(.105,.22,12),orange);
+ beak.rotation.x=Math.PI/2;beak.position.set(0,1.29,.42);
+ beak.scale.setScalar(scale);g.add(beak);
+ sphere(.12,.055,.20,orange,-.23,.19,.04,g).scale.multiplyScalar(scale);
+ sphere(.12,.055,.20,orange,.23,.19,.04,g).scale.multiplyScalar(scale);
+ const wing1=sphere(.13,.35,.12,bodyMat,-.43,.85,0,g);
+ const wing2=sphere(.13,.35,.12,bodyMat,.43,.85,0,g);
+ wing1.rotation.z=-.25;wing2.rotation.z=.25;
+ g.scale.setScalar(scale);
+ world.add(g);return g;
+}
+
+const mother=penguin(1.0,false);
+const baby=penguin(.65,true);
+mother.position.set(-.38,0,3);
+baby.position.set(.48,0,3.6);
+
+const floor=box(13,.5,110,snow,0,-.55,-42);
+const river=box(40,.3,110,water,0,-1.0,-42);
+const banks=[];
+banks.push(box(4,.5,110,snow,-8,-.45,-42));
+banks.push(box(4,.5,110,snow,8,-.45,-42));
+
+// Các cụm tuyết và cây thông để tạo chiều sâu.
+for(let i=0;i<38;i++){
+ const z=-i*2.9+7;
+ for(const side of [-1,1]){
+  const x=side*(8+Math.random()*5);
+  sphere(.65+Math.random()*.5,.3+Math.random()*.35,
+         .8+Math.random()*.5,snow,x,-.12,z);
+  if(i%2===0){
+   cylinder(.10,.20,1.3,mat(0x72533f),x,.55,z);
+   const foliage=mat(0x347b8a);
+   for(let j=0;j<3;j++){
+    const cone=new THREE.Mesh(
+     new THREE.ConeGeometry(1.0-j*.18,1.5,8),foliage);
+    cone.position.set(x,1.3+j*.65,z);world.add(cone);
+   }
+  }
+ }
+}
+
+let walls=[],tiles=[],fishBucket=null,fish=[];
+let stage=0,row=0,weakHits=0,started=false,locked=false;
+let xLane=0,progress=0,jumpTime=0,score=0;
+let questionIndex=0, returnRow=0, usedRows=new Set();
+let messageTimer=0;
 
 const questions=[
- {subject:"TOÁN ĐẠI SỐ",q:"Câu 1. Thu gọn 3x²y · 2xy², ta được:",a:["5x³y³","6x²y²","6x³y³","6x³y²"],c:2},
- {subject:"HÓA HỌC",q:"Câu 2. Hòa tan 10 g muối vào 90 g nước. Nồng độ phần trăm là:",a:["5%","10%","15%","20%"],c:1},
- {subject:"VẬT LÝ",q:"Câu 3. Công thức tính khối lượng riêng là:",a:["D = mV","D = V/m","D = m/V","D = m + V"],c:2},
- {subject:"SINH HỌC",q:"Câu 4. Bộ phận nào thuộc hệ vận động của người?",a:["Tim","Phổi","Xương","Dạ dày"],c:2},
- {subject:"ĐỊA LÝ",q:"Câu 5. Việt Nam nằm ở khu vực nào của châu Á?",a:["Đông Á","Tây Á","Đông Nam Á","Nam Á"],c:2}
+ {q:"Nước tinh khiết sôi ở nhiệt độ bao nhiêu (áp suất thường)?",
+  a:["50°C","100°C","150°C","200°C"],c:1},
+ {q:"Công thức tính khối lượng riêng là gì?",
+  a:["D = m/V","D = V/m","D = m × V","D = V − m"],c:0},
+ {q:"Đòn bẩy có tác dụng nào?",
+  a:["Luôn làm vật nhẹ hơn","Có thể đổi hướng lực","Tạo ra năng lượng","Làm mất trọng lực"],c:1},
+ {q:"Số đối của −8 là số nào?",
+  a:["−8","0","8","16"],c:2},
+ {q:"Khí nào chiếm phần lớn trong không khí?",
+  a:["Oxygen","Nitrogen","Carbon dioxide","Hydrogen"],c:1}
 ];
 
-const scene=new THREE.Scene();
-scene.background=new THREE.Color(0x9edfff);
-scene.fog=new THREE.Fog(0x9edfff,42,125);
-
-const camera=new THREE.PerspectiveCamera(63,1,.1,300);
-const renderer=new THREE.WebGLRenderer({antialias:true});
-renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
-renderer.shadowMap.enabled=true;
-renderer.outputColorSpace=THREE.SRGBColorSpace;
-renderer.domElement.style.cssText="position:absolute;inset:0;width:100%;height:100%";
-root.insertBefore(renderer.domElement,root.firstChild);
-
-scene.add(new THREE.HemisphereLight(0xe9f8ff,0x426b87,2.0));
-const sun=new THREE.DirectionalLight(0xffffff,2.4);
-sun.position.set(-10,20,12);sun.castShadow=true;scene.add(sun);
-
-function material(color,roughness=.65,transparent=false,opacity=1){
- return new THREE.MeshStandardMaterial({color,roughness,transparent,opacity});
+function clearObjects(list){
+ list.forEach(o=>world.remove(o));
+ list.length=0;
 }
-const snow=material(0xf2fbff);
-const ice=material(0x69d6ff,.23);
-const darkIce=material(0x1688c6,.2);
-const water=material(0x0879bd,.25);
-const wood=material(0x855637);
-const penguinBlack=material(0x263448);
-const white=material(0xffffff);
-const orange=material(0xffa12b);
-const scarfBlue=material(0x53b9ff);
-const barrierMat=material(0x48b9f2,.2,true,.63);
-
-function box(parent,w,h,d,mat,x,y,z){
- const mesh=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat);
- mesh.position.set(x,y,z);
- mesh.castShadow=true;mesh.receiveShadow=true;
- parent.add(mesh);return mesh;
-}
-function sphere(parent,x,y,z,sx,sy,sz,mat){
- const mesh=new THREE.Mesh(new THREE.SphereGeometry(1,18,14),mat);
- mesh.position.set(x,y,z);mesh.scale.set(sx,sy,sz);
- mesh.castShadow=true;parent.add(mesh);return mesh;
-}
-function cone(parent,x,y,z,r,h,mat){
- const mesh=new THREE.Mesh(new THREE.ConeGeometry(r,h,7),mat);
- mesh.position.set(x,y,z);mesh.castShadow=true;parent.add(mesh);return mesh;
-}
-
-// Sông xanh với lớp băng mỏng, bờ tuyết và cảnh vật cố định.
-box(scene,12,.4,175,water,0,-.55,-70);
-box(scene,12,.06,175,material(0x65d8ff,.2,true,.35),0,-.32,-70);
-box(scene,19,.55,14,snow,0,-.05,9);
-box(scene,19,.55,14,snow,0,-.05,-145);
-
-for(const side of [-1,1]){
- box(scene,4,2.2,175,material(0x91c5e7),side*8,-.2,-70);
- box(scene,4,.5,175,snow,side*8,.95,-70);
- for(let z=14;z>-158;z-=10){
-  const x=side*(7.1+Math.random()*1.1);
-  box(scene,.45,2,.45,wood,x,1.6,z);
-  cone(scene,x,3,z,1.3,2.6,material(0x267f70));
-  cone(scene,x,4.1,z,.95,2.2,material(0x3c9b81));
- }
-}
-
-// Tạo một chú chim cánh cụt dễ thương.
-// Chim con đi cạnh chim mẹ; xô cá xuất hiện khi quay về.
-function makePenguin(scale,withBucket){
+function makeBucket(){
  const g=new THREE.Group();
- sphere(g,0,1,0,.48,.66,.43,penguinBlack);
- sphere(g,0,1.02,-.32,.34,.45,.13,white);
- sphere(g,0,1.83,0,.4,.4,.37,penguinBlack);
- sphere(g,-.13,1.88,-.32,.16,.15,.08,white);
- sphere(g,.13,1.88,-.32,.16,.15,.08,white);
- sphere(g,-.13,1.88,-.395,.045,.06,.025,material(0x111820));
- sphere(g,.13,1.88,-.395,.045,.06,.025,material(0x111820));
- cone(g,0,1.72,-.43,.13,.19,orange).rotation.x=Math.PI/2;
- sphere(g,-.49,1.08,0,.15,.42,.19,penguinBlack);
- sphere(g,.49,1.08,0,.15,.42,.19,penguinBlack);
- box(g,.76,.15,.76,scarfBlue,0,1.43,0);
- box(g,.2,.48,.12,scarfBlue,.18,1.2,-.39);
- box(g,.25,.13,.36,orange,-.23,.15,-.08);
- box(g,.25,.13,.36,orange,.23,.15,-.08);
- if(withBucket){
-  const b=box(g,.35,.3,.31,material(0xa7d9ed),-.62,.63,-.05);
-  b.rotation.z=-.08;
-  const rim=box(g,.39,.06,.35,material(0x7da8c0),-.62,.8,-.05);
-  rim.rotation.z=-.08;
-  for(let i=0;i<3;i++)sphere(g,-.7+i*.09,.82,-.08,.055,.07,.06,orange);
-  const handle=new THREE.Mesh(
-   new THREE.TorusGeometry(.19,.025,7,18,Math.PI),
-   material(0x7897a9)
-  );
-  handle.position.set(-.62,.82,-.05);handle.rotation.z=Math.PI;
-  g.add(handle);
+ cylinder(.30,.36,.48,mat(0xefa83e),0,.24,0,g);
+ cylinder(.31,.31,.05,mat(0x9a652c),0,.48,0,g);
+ cylinder(.035,.035,.48,mat(0x8c6a42),-.27,.70,0,g).rotation.z=-.5;
+ cylinder(.035,.035,.48,mat(0x8c6a42),.27,.70,0,g).rotation.z=.5;
+ for(let i=0;i<5;i++){
+  const f=sphere(.075,.055,.15,orange,-.18+(i%3)*.16,.56,
+                 -.10+Math.floor(i/3)*.13,g);
+  f.rotation.z=.3;
  }
- g.scale.setScalar(scale);
- return g;
+ world.add(g);g.position.set(.35,.02,-1);return g;
 }
-
-const mother=makePenguin(1.05,false);
-const baby=makePenguin(.58,false);
-scene.add(mother);scene.add(baby);
-
-// Các tảng băng: bốn ô trên một hàng, mỗi ô thẳng hàng với đáp án.
-const laneX=[-3.3,-1.1,1.1,3.3];
-const rowZ=Array.from({length:5},(_,i)=>-5-i*12);
-const questionTiles=[];
-const questionWalls=[];
-const returnTiles=[];
-const returnWalls=[];
-
-for(let r=0;r<5;r++){
- const tiles=[];
+function makeRow(z,index,isReturn){
+ // Bốn tảng băng nằm thành hàng ngang.
  for(let lane=0;lane<4;lane++){
-  const group=new THREE.Group();
-  scene.add(group);
-  const top=box(group,1.75,.42,2.05,ice,laneX[lane],-.05,rowZ[r]);
-  box(group,1.82,.12,2.12,material(0xc9f5ff),laneX[lane],.19,rowZ[r]);
-  for(let k=0;k<3;k++){
-   const shard=box(group,.12,.22,.12,darkIce,
-     laneX[lane]-.55+k*.55,-.32,rowZ[r]+.1);
-   shard.rotation.z=.4;
+  const x=(lane-1.5)*1.75;
+  const t=box(1.53,.45,1.65,ice,x,-.1,z);
+  const top=box(1.49,.10,1.60,iceTop,x,.17,z);
+  const group={x,z,lane,meshes:[t,top],weak:false,used:false};
+  if(isReturn){
+   group.weak=(lane===Math.floor(Math.random()*4));
+  }else{
+   // Mỗi hàng có một vách cao, trong suốt ngăn đường đi.
   }
-  tiles.push({group,top,lane,row:r});
+  tiles.push(group);
  }
- questionTiles.push(tiles);
-
- // Vách cao, trong mờ để vẫn nhìn thấy hàng phía sau.
- const wall=box(scene,10,.0+3.8,.5,barrierMat,0,1.9,rowZ[r]-2.3);
- box(scene,10,.12,.58,material(0xe2fbff),0,3.84,rowZ[r]-2.3);
- questionWalls.push({wall,open:false,progress:0,baseY:1.9});
-}
-
-// Xô cá và đích ở bờ đối diện.
-const bucketGroup=new THREE.Group();
-scene.add(bucketGroup);
-const bucketBody=box(bucketGroup,.75,.65,.65,material(0x9bcce0),-.65,.45,-145);
-bucketBody.rotation.z=-.08;
-box(bucketGroup,.82,.1,.7,wood,-.65,.8,-145);
-for(let i=0;i<5;i++){
- sphere(bucketGroup,-.9+(i%3)*.23,.88+(i%2)*.08,-145+(i%2)*.13,.09,.1,.1,orange);
-}
-bucketGroup.visible=false;
-
-box(scene,10,.12,.4,material(0xffffff),0,.7,-147);
-for(let z=-138;z>-160;z-=3){
- sphere(scene,-7,1,z,.6,.6,.6,snow);
- sphere(scene,7,1,z,.6,.6,.6,snow);
-}
-
-// Màn quay về: các hàng băng yếu và vách cao giữa các hàng.
-for(let r=0;r<5;r++){
- const z=rowZ[r];
- const tiles=[];
- for(let lane=0;lane<4;lane++){
-  const group=new THREE.Group();scene.add(group);
-  const top=box(group,1.75,.42,2.05,ice,laneX[lane],-.05,z);
-  box(group,1.82,.12,2.12,material(0xc9f5ff),laneX[lane],.19,z);
-  tiles.push({group,top,lane,row:r,weak:false,used:false,collapsed:false});
+ if(!isReturn){
+  const wall=box(8,.0, .16,wallMat,0,0,z-1.15);
+  wall.geometry.dispose();
+  wall.geometry=new THREE.BoxGeometry(8,3.2,.16);
+  wall.position.y=1.5;
+  walls.push({mesh:wall,row:index,down:false});
  }
- returnTiles.push(tiles);
- const wall=box(scene,10,3.8,.5,barrierMat,0,1.9,z+3.0);
- box(scene,10,.12,.58,material(0xe2fbff),0,3.84,z+3.0);
- returnWalls.push({wall,open:false,progress:0,baseY:1.9});
 }
-
-// Tuyết rơi.
-const snowGroup=new THREE.Group();scene.add(snowGroup);
-const snowDots=[];
-for(let i=0;i<140;i++){
- const dot=new THREE.Mesh(new THREE.SphereGeometry(.045,5,5),white);
- dot.position.set((Math.random()-.5)*26,Math.random()*12,Math.random()*-165+12);
- snowGroup.add(dot);snowDots.push(dot);
+function resetCourse(isReturn){
+ clearObjects(walls.map(w=>w.mesh));
+ clearObjects(tiles.flatMap(t=>t.meshes));
+ tiles=[];walls=[];
+ for(let i=0;i<5;i++) makeRow(-i*8-3,i,isReturn);
+ floor.position.z=-17;
+ mother.position.set(-.38,0,3);
+ baby.position.set(.48,0,3.6);
+ xLane=0;progress=0;row=0;returnRow=0;
+ camera.position.set(0,5,10);
+ camera.lookAt(0,1,-2);
 }
-
-let phase="start",started=false,finished=false;
-let px=0,pz=8,py=0,jumpV=0;
-let qIndex=0,returnIndex=4,weakCount=0,score=0;
-let hasBucket=false,attemptLocked=false;
-let keys={},touch={};
-let lastTime=0,lastJump=false;
-let lastRowEvent=-1;
-
-function setMessage(text,color){
- messageEl.textContent=text;
- messageEl.style.background=color||"#174d77eF";
+function updateHud(){
+ document.getElementById('stage').textContent=
+  stage===1?'🐟 Chặng 1: Đi lấy cá':'🪣 Chặng 2: Đưa cá về';
+ document.getElementById('score').textContent=
+  stage===1?`🧊 ${Math.min(row,5)}/5 hàng`:`🏁 ${Math.min(returnRow,5)}/5 hàng`;
+ document.getElementById('lives').textContent=`⚠️ Băng yếu: ${weakHits}/3`;
+}
+function panel(title,q,buttons=[],msg=''){
+ document.getElementById('title').textContent=title;
+ document.getElementById('question').textContent=q;
+ document.getElementById('message').textContent=msg;
+ const ans=document.getElementById('answers');ans.innerHTML='';
+ buttons.forEach((b,i)=>{
+  const btn=document.createElement('button');btn.textContent=b;
+  btn.onclick=()=>answer(i);ans.appendChild(btn);
+ });
+}
+function startGame(){
+ started=true;stage=1;row=0;weakHits=0;score=0;locked=false;
+ resetCourse(false);
+ document.getElementById('panel').style.display='none';
+ updateHud();showQuestion();
 }
 function showQuestion(){
- const q=questions[qIndex];
- progressEl.textContent="BỨC TƯỜNG "+(qIndex+1)+"/5 · "+q.subject;
- questionEl.textContent=q.q;
- answersEl.innerHTML="";
- q.a.forEach((a,i)=>{
-  const b=document.createElement("button");
-  b.className="answer";
-  b.textContent=String.fromCharCode(65+i)+". "+a;
-  answersEl.appendChild(b);
- });
+ locked=true;
+ if(row>=5){getFish();return;}
+ const q=questions[row];
+ document.getElementById('panel').style.display='block';
+ panel(`Câu hỏi ${row+1}/5`,q.q,q.a,'Chọn đáp án đúng để hạ vách băng!');
 }
-function showReturnUI(){
- progressEl.textContent="🐟 ĐÃ LẤY XÔ CÁ · CHẶNG QUAY VỀ";
- questionEl.textContent="Nhảy qua băng để đưa cá về bờ! Băng yếu: "+weakCount+"/3";
- answersEl.innerHTML="";
+function answer(i){
+ if(!locked)return;
+ const q=questions[row];
+ if(i===q.c){
+  locked=false;
+  const w=walls.find(w=>w.row===row);
+  if(w) w.down=true;
+  document.getElementById('panel').style.display='none';
+  row++;score++;
+  progress=Math.max(progress,row);
+  updateHud();
+  if(row>=5){setTimeout(getFish,1200);}
+  else{
+   // Đưa nhân vật tới hàng kế tiếp.
+   mother.position.z=-row*8+1;
+   baby.position.z=mother.position.z+.6;
+   setTimeout(showQuestion,1000);
+  }
+ }else{
+  panel('Chưa đúng rồi! 🐧',q.q,q.a,'Hãy thử lại nhé!');
+ }
 }
-function openQuestionWall(i){
- const w=questionWalls[i];
- if(w.open)return;
- w.open=true;
- w.progress=0;
- score++;
-}
-function resetGame(){
- phase="question";started=true;finished=false;
- px=0;pz=8;py=0;jumpV=0;
- qIndex=0;returnIndex=4;weakCount=0;score=0;
- hasBucket=false;attemptLocked=false;lastRowEvent=-1;
- questionWalls.forEach(w=>{w.open=false;w.progress=0;w.wall.position.y=w.baseY;w.wall.scale.y=1;});
- returnWalls.forEach(w=>{w.open=false;w.progress=0;w.wall.position.y=w.baseY;w.wall.scale.y=1;});
- questionTiles.forEach(row=>row.forEach(t=>{
-  t.group.visible=true;t.top.material=ice;t.top.position.y=-.05;
- }));
- returnTiles.forEach(row=>row.forEach(t=>{
-  t.group.visible=true;t.top.material=ice;t.top.position.y=-.05;t.used=false;t.collapsed=false;
-  t.weak=false;
- }));
- // Mỗi hàng quay về có đúng một băng yếu được chọn ngẫu nhiên.
- returnTiles.forEach(row=>{
-  row[Math.floor(Math.random()*4)].weak=true;
- });
- mother.position.set(0,0,8);
- baby.position.set(1.15,0,8.7);
- mother.rotation.y=Math.PI;
- baby.rotation.y=Math.PI;
- bucketGroup.visible=false;
- mother.children.forEach(c=>{});
- startEl.style.display="none";endEl.style.display="none";
- answersEl.style.display="grid";
- showQuestion();
- setMessage("Di chuyển tới hàng băng, chọn làn đáp án rồi nhấn NHẢY.");
- keys={};touch={};
-}
-function endGame(won,title,text){
- finished=true;phase=won?"won":"lost";
- document.getElementById("endTitle").textContent=title;
- document.getElementById("endText").textContent=text;
- endEl.style.display="flex";
-}
-function beginReturn(){
- phase="return";
- hasBucket=true;
- bucketGroup.visible=true;
- mother=attachBucketToMother();
- returnIndex=4;
- px=0;pz=rowZ[4]-3;
- mother.position.set(px,py,pz);
- baby.position.set(px+1.05,py,pz+.65);
- // Đổi hướng quay về bờ xuất phát.
- mother.rotation.y=0;baby.rotation.y=0;
- showReturnUI();
- setMessage("Cầm xô cá! Nhảy qua từng hàng băng để về bờ.", "#177d69");
-}
-function attachBucketToMother(){
- const old=mother;
- const replacement=makePenguin(1.05,true);
- scene.add(replacement);
- replacement.position.copy(old.position);
- replacement.rotation.copy(old.rotation);
- scene.remove(old);
- return replacement;
+function getFish(){
+ stage=2;locked=true;
+ mother.position.set(-.3,0,-39);
+ baby.position.set(.6,0,-39.5);
+ if(fishBucket)world.remove(fishBucket);
+ fishBucket=makeBucket();
+ fishBucket.position.set(.5,0,-39);
+ resetCourse(true);
+ mother.position.set(-.3,0,3);
+ baby.position.set(.6,0,3.6);
+ fishBucket.position.set(-.8,.1,2.3);
+ // Thể hiện xô cá ngay cạnh chim mẹ.
+ document.getElementById('panel').style.display='block';
+ document.getElementById('start').style.display='none';
+ document.getElementById('answers').innerHTML='';
+ panel('🎉 Đã lấy được cá!','Chặng quay về bắt đầu. Hãy cẩn thận với băng yếu.',[],
+       'Đi qua 5 hàng băng để đưa cá về nhà.');
+ setTimeout(()=>{
+  document.getElementById('panel').style.display='none';
+  locked=false;updateHud();
+ },1800);
 }
 
-function evaluateQuestion(lane){
- if(phase!=="question"||attemptLocked||qIndex>=5)return;
- const q=questions[qIndex];
- attemptLocked=true;
- if(lane===q.c){
-  openQuestionWall(qIndex);
-  setMessage("ĐÚNG RỒI! Vách băng đang chìm xuống! 🎉","#16845b");
-  setTimeout(()=>{
-   if(phase!=="question")return;
-   qIndex++;
-   attemptLocked=false;
-   lastRowEvent=-1;
-   if(qIndex>=5){
-    phase="bucket";
-    progressEl.textContent="ĐÃ VƯỢT QUA 5 BỨC TƯỜNG!";
-    questionEl.textContent="Bờ bên kia có xô cá đang chờ em!";
-    answersEl.innerHTML="";
-    setMessage("Đi tới xô cá ở bờ bên kia để bắt đầu chặng quay về.","#177d69");
-   }else{
-    showQuestion();
-    setMessage("Tiếp tục tới hàng tiếp theo!");
+function move(dx,dz){
+ if(!started||locked)return;
+ xLane=Math.max(-2.6,Math.min(2.6,xLane+dx*1.05));
+ mother.position.x=xLane-.3;
+ baby.position.x=xLane+.6;
+ if(dz<0){
+  mother.position.z-=1.0;baby.position.z-=1.0;
+  checkTiles();
+ }else if(dz>0){
+  mother.position.z+=.7;baby.position.z+=.7;
+ }
+}
+function jump(){
+ if(!started||locked)return;
+ jumpTime=.65;
+ mother.userData.jumping=true;
+ baby.userData.jumping=true;
+}
+function checkTiles(){
+ if(stage!==2)return;
+ const z=mother.position.z;
+ const r=Math.floor((3-z)/8);
+ if(r>=0&&r<5&&r>=returnRow){
+  const lane=Math.max(0,Math.min(3,Math.round((xLane+2.625)/1.75)));
+  const tile=tiles.find(t=>t.lane===lane&&Math.abs(t.z-(-r*8-3))<.2);
+  if(tile&&!tile.used){
+   tile.used=true;
+   if(tile.weak&&jumpTime<=0){
+    weakHits++;
+    // Băng yếu chìm xuống thật sự.
+    tile.meshes.forEach(m=>m.userData.sink=true);
+    if(weakHits>=3){fallAndRestart();return;}
    }
-  },1200);
- }else{
-  setMessage("Chưa đúng! Hãy thử nhảy vào tảng băng khác nhé.","#b33d50");
-  setTimeout(()=>{attemptLocked=false;},550);
- }
-}
-function triggerJump(){
- if(!started||finished)return;
- if(py<=.02){jumpV=7.4;}
-}
-
-function nearRow(z,row){
- return Math.abs(z-row)<1.25;
-}
-
-function checkQuestionRow(){
- if(phase!=="question"||qIndex>=5||py<.2||attemptLocked)return;
- const z=rowZ[qIndex];
- if(nearRow(pz,z)&&lastRowEvent!==qIndex){
-  const lane=laneX.reduce((best,x,i)=>
-   Math.abs(px-x)<Math.abs(px-laneX[best])?i:best,0);
-  if(Math.abs(px-laneX[lane])<.95){
-   lastRowEvent=qIndex;
-   evaluateQuestion(lane);
+   returnRow=r+1;
+   updateHud();
+   if(returnRow>=5){winGame();}
   }
  }
 }
-function checkBucket(){
- if(phase!=="bucket")return;
- // Xô cá nằm ở bờ bên kia; tiến sát bờ là nhận xô.
- if(pz<-141){
-  beginReturn();
- }
+function fallAndRestart(){
+ locked=true;
+ panel('💦 Ôi! Băng bị vỡ!', 'Chim cánh cụt đã rơi xuống sông băng.',
+       [],'Em sẽ quay lại bờ xuất phát cùng thùng cá.');
+ mother.userData.falling=true;
+ baby.userData.falling=true;
+ setTimeout(()=>{
+  mother.userData.falling=false;baby.userData.falling=false;
+  mother.position.set(-.3,0,3);baby.position.set(.6,0,3.6);
+  if(fishBucket)fishBucket.position.set(-.8,.1,2.3);
+  xLane=0;returnRow=0;weakHits=0;locked=false;
+  tiles.forEach(t=>{t.used=false;t.meshes.forEach(m=>{
+   m.position.y=t.meshes.indexOf(m)===0?-.1:.17;
+   m.userData.sink=false;
+  });});
+  panel('Bắt đầu lại nhé! 🐧','Em vẫn có thể đưa cá về nhà!',[],
+        'Hãy thử chọn đường đi khác và nhảy qua băng yếu.');
+  document.getElementById('start').style.display='block';
+  document.getElementById('start').textContent='TIẾP TỤC ▶';
+  document.getElementById('start').onclick=()=>{
+   document.getElementById('panel').style.display='none';
+   locked=false;
+  };
+ },1600);
 }
-function checkReturnRow(){
- if(phase!=="return"||returnIndex<0||py<.2)return;
- const z=rowZ[returnIndex];
- if(!nearRow(pz,z)||lastRowEvent===returnIndex)return;
- const lane=laneX.reduce((best,x,i)=>
-  Math.abs(px-x)<Math.abs(px-laneX[best])?i:best,0);
- if(Math.abs(px-laneX[lane])>.95)return;
- lastRowEvent=returnIndex;
- const tile=returnTiles[returnIndex][lane];
- tile.used=true;
- if(tile.weak){
-  tile.collapsed=true;
-  tile.top.material=material(0x135f94,.25);
-  tile.top.position.y=-.85;
-  tile.group.position.y=-.85;
-  weakCount++;
-  setMessage("Ối! Băng yếu chìm xuống! "+weakCount+"/3","#b33d50");
-  questionEl.textContent="Băng yếu: "+weakCount+"/3";
-  if(weakCount>=3){
-   setTimeout(()=>{
-    endGame(false,"💦 Ôi không!","Chim mẹ và chim con bị chìm xuống nước! Em hãy thử lại từ bờ có thùng cá nhé.");
-   },500);
-   return;
-  }
- }else{
-  setMessage("Giỏi quá! Tảng băng này chắc chắn! 🧊","#177d69");
- }
- returnWalls[returnIndex].open=true;
- returnWalls[returnIndex].progress=0;
- returnIndex--;
- lastRowEvent=-1;
- if(returnIndex<0){
-  endGame(true,"🏆 VỀ ĐẾN BỜ RỒI!","Em đã mang xô cá về an toàn! Điểm câu hỏi: "+score+"/5. Hai mẹ con chim cánh cụt cảm ơn em!");
- }
+function winGame(){
+ locked=true;
+ panel('🎉 VỀ NHÀ AN TOÀN!','Chim mẹ và chim con đã mang cá về nhà!',
+       [],'Em đã hoàn thành cả hai chặng phiêu lưu!');
+ document.getElementById('start').style.display='block';
+ document.getElementById('start').textContent='CHƠI LẠI 🔄';
+ document.getElementById('start').onclick=()=>{
+  document.getElementById('start').textContent='BẮT ĐẦU CHƠI ▶';
+  document.getElementById('start').onclick=startGame;
+  document.getElementById('start').style.display='block';
+  startGame();
+ };
 }
-
-function blockedByWall(oldZ,newZ){
- if(phase==="question"&&qIndex<5&&!questionWalls[qIndex].open){
-  const wallZ=rowZ[qIndex]-2.3;
-  if(oldZ>wallZ&&newZ<=wallZ)return wallZ+.18;
- }
- if(phase==="return"&&returnIndex>=0&&!returnWalls[returnIndex].open){
-  const wallZ=rowZ[returnIndex]+3;
-  if(oldZ<wallZ&&newZ>=wallZ)return wallZ-.18;
- }
- return newZ;
-}
-
-function resize(){
- const w=root.clientWidth,h=root.clientHeight;
- renderer.setSize(w,h,false);
- camera.aspect=w/h;camera.updateProjectionMatrix();
-}
-new ResizeObserver(resize).observe(root);resize();
-
-window.addEventListener("keydown",e=>{
- const k=e.key.toLowerCase();
- keys[k]=true;
- if(e.code==="Space"){
+function onKey(e){
+ if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' '].includes(e.key))
   e.preventDefault();
-  if(!lastJump)triggerJump();
-  lastJump=true;
- }
-});
-window.addEventListener("keyup",e=>{
- keys[e.key.toLowerCase()]=false;
- if(e.code==="Space")lastJump=false;
-});
-window.addEventListener("blur",()=>{keys={};touch={};lastJump=false;});
-
-document.querySelectorAll(".ctrl").forEach(b=>{
- const k=b.dataset.key;
- b.addEventListener("pointerdown",e=>{e.preventDefault();touch[k]=true;});
- ["pointerup","pointercancel","pointerleave"].forEach(ev=>
-  b.addEventListener(ev,e=>{e.preventDefault();touch[k]=false;})
- );
-});
-document.getElementById("jump").addEventListener("pointerdown",e=>{
- e.preventDefault();if(!touch.jump)triggerJump();touch.jump=true;
-});
-["pointerup","pointercancel","pointerleave"].forEach(ev=>
- document.getElementById("jump").addEventListener(ev,e=>{
-  e.preventDefault();touch.jump=false;
- })
-);
-
-function forward(){return keys.w||keys.arrowup||touch.up;}
-function backward(){return keys.s||keys.arrowdown||touch.down;}
-function left(){return keys.a||keys.arrowleft||touch.left;}
-function right(){return keys.d||keys.arrowright||touch.right;}
-
-function update(dt,time){
- if(!started||finished)return;
- const oldZ=pz;
- const move=5.5*dt;
- if(left())px-=move;
- if(right())px+=move;
- px=Math.max(-4.3,Math.min(4.3,px));
-
- let dz=0;
- if(phase==="question"||phase==="bucket"){
-  if(forward())dz-=move;
-  if(backward())dz+=move;
- }else if(phase==="return"){
-  if(forward())dz+=move;
-  if(backward())dz-=move;
- }
- const candidate=blockedByWall(oldZ,pz+dz);
- pz=candidate;
-
- jumpV-=17*dt;
- py+=jumpV*dt;
- if(py<0){py=0;jumpV=0;}
-
- // Tự động mở dần các vách đã được trả lời đúng.
- questionWalls.forEach(w=>{
-  if(w.open&&w.progress<1){
-   w.progress=Math.min(1,w.progress+dt*1.1);
-   const t=w.progress;
-   w.wall.position.y=w.baseY*(1-t)-.3*t;
-   w.wall.scale.y=Math.max(.02,1-t);
-  }
- });
- returnWalls.forEach(w=>{
-  if(w.open&&w.progress<1){
-   w.progress=Math.min(1,w.progress+dt*1.4);
-   const t=w.progress;
-   w.wall.position.y=w.baseY*(1-t)-.3*t;
-   w.wall.scale.y=Math.max(.02,1-t);
-  }
- });
-
- if(phase==="question")checkQuestionRow();
- if(phase==="bucket")checkBucket();
- if(phase==="return")checkReturnRow();
-
- mother.position.set(px,py,pz);
- baby.position.set(px+1.05,py,pz+.65);
- mother.rotation.y=phase==="return"?0:Math.PI;
- baby.rotation.y=mother.rotation.y;
-
- // Lắc nhẹ khi đi; hai mẹ con cùng nhảy.
- const walking=forward()||backward()||left()||right();
- mother.rotation.z=walking?Math.sin(time*.009)*.035:0;
- baby.rotation.z=walking?Math.sin(time*.009+1)*.04:0;
-
- // Camera bám theo phía sau chim mẹ.
- const target=new THREE.Vector3(px,py+4.2,pz+(phase==="return"?8.5:8.5));
- camera.position.lerp(target,Math.min(1,dt*4.5));
- camera.lookAt(px,py+1.0,pz+(phase==="return"?-3.5:-4.5));
-
- for(const dot of snowDots){
-  dot.position.y-=dt*1.5;
-  dot.position.x+=Math.sin(time*.001+dot.position.z)*dt*.15;
-  if(dot.position.y<0){
-   dot.position.y=10+Math.random()*3;
-   dot.position.z=pz-25-Math.random()*90;
-  }
- }
-
- if(phase==="question"){
-  progressEl.textContent="BỨC TƯỜNG "+(qIndex+1)+"/5 · "+questions[qIndex].subject;
- }else if(phase==="bucket"){
-  progressEl.textContent="ĐÃ VƯỢT QUA 5 BỨC TƯỜNG!";
-  questionEl.textContent="Tiến đến bờ bên kia để lấy xô cá!";
- }else if(phase==="return"){
-  progressEl.textContent="CHẶNG QUAY VỀ · HÀNG "+(5-returnIndex)+"/5";
-  questionEl.textContent="Băng yếu: "+weakCount+"/3 · Chọn tảng băng và nhảy!";
- }
+ if(e.key==='ArrowUp'||e.key==='w')move(0,-1);
+ if(e.key==='ArrowDown'||e.key==='s')move(0,1);
+ if(e.key==='ArrowLeft'||e.key==='a')move(-1,0);
+ if(e.key==='ArrowRight'||e.key==='d')move(1,0);
+ if(e.key===' ')jump();
 }
+window.addEventListener('keydown',onKey);
+window.move=move;window.jump=jump;window.startGame=startGame;window.answer=answer;
 
-function animate(time){
+function animate(){
  requestAnimationFrame(animate);
- const dt=Math.min((time-lastTime)/1000||0,.04);
- lastTime=time;
- update(dt,time);
- renderer.render(scene,camera);
+ const dt=.016;
+ if(jumpTime>0){
+  jumpTime-=dt;
+  const h=Math.sin((.65-jumpTime)/.65*Math.PI)*1.1;
+  mother.position.y=Math.max(0,h);
+  baby.position.y=Math.max(0,h*.7);
+ }else{
+  mother.position.y+=(0-mother.position.y)*.2;
+  baby.position.y+=(0-baby.position.y)*.2;
+ }
+ if(mother.userData.falling){
+  mother.position.y-=.07;baby.position.y-=.06;
+ }
+ walls.forEach(w=>{
+  if(w.down&&w.mesh.position.y>-2.1){
+   w.mesh.position.y-=.045;
+  }
+ });
+ tiles.forEach(t=>{
+  t.meshes.forEach(m=>{
+   if(m.userData.sink&&m.position.y> -1.5){
+    m.position.y-=.045;
+   }
+  });
+ });
+ // Góc máy theo sau nhân vật.
+ const target=new THREE.Vector3(mother.position.x,1.1,mother.position.z+6.8);
+ camera.position.lerp(target,.08);
+ camera.lookAt(mother.position.x,1.0,mother.position.z-5);
+ if(fishBucket&&stage===2){
+  fishBucket.position.x=mother.position.x-.5;
+  fishBucket.position.z=mother.position.z+.5;
+ }
+ renderer.render(world,camera);
 }
-requestAnimationFrame(animate);
-
-document.getElementById("startBtn").onclick=resetGame;
-document.getElementById("againBtn").onclick=()=>{
- resetGame();
-};
-})();
+window.addEventListener('resize',()=>{
+ camera.aspect=sceneBox.clientWidth/sceneBox.clientHeight;
+ camera.updateProjectionMatrix();
+ renderer.setSize(sceneBox.clientWidth,sceneBox.clientHeight);
+});
+animate();
 </script>
 </body>
 </html>
 """
 
-components.html(html, height=750, scrolling=False)
+components.html(game, height=650, scrolling=False)
