@@ -23,8 +23,23 @@ body{margin:0;font-family:Arial,sans-serif;background:#08243c;color:white}
 .pill{background:#062944e8;border:2px solid #b8f2ff;border-radius:14px;padding:9px 12px;font-weight:bold;font-size:14px}
 #question{position:absolute;top:65px;left:50%;transform:translateX(-50%);width:min(94%,560px);background:#082c4ded;border:2px solid #b7efff;border-radius:16px;padding:12px;text-align:center;display:none}
 #qtext{font-size:17px;font-weight:bold;margin-bottom:10px}
-#answers{display:grid;grid-template-columns:1fr 1fr;gap:7px}
-.answer{background:#e9faff;color:#082b46;border:2px solid #73d9f7;border-radius:10px;padding:9px 5px;font-size:14px;font-weight:bold}
+#answers{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:6px;
+}
+.answer{
+  background:#e9faff;
+  color:#082b46;
+  border:2px solid #73d9f7;
+  border-radius:10px;
+  padding:10px 3px;
+  font-size:14px;
+  font-weight:bold;
+  text-align:center;
+  overflow-wrap:anywhere;
+}
+x solid #73d9f7;border-radius:10px;padding:9px 5px;font-size:14px;font-weight:bold}
 #message{position:absolute;bottom:105px;left:50%;transform:translateX(-50%);background:#062944e8;border-radius:12px;padding:9px 13px;text-align:center;width:max-content;max-width:94%;font-weight:bold}
 #overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:#04182dbb;padding:16px}
 #panel{width:min(94%,440px);max-height:94%;overflow:auto;text-align:center;background:linear-gradient(145deg,#146c8c,#071c3d);border:3px solid #80eaff;border-radius:24px;padding:23px 20px;box-shadow:0 10px 35px #00152699}
@@ -286,12 +301,15 @@ function prepareQuestions(){
   const shuffledQ=shuffle(questions);
   rows.forEach((row,r)=>{
     row.q=shuffledQ[r];
-    const order=shuffle([0,1,2,3]);
-    row.correctLane=order.indexOf(row.q.c);
-    order.forEach((answerIndex,lane)=>{
-      const letter=["A","B","C","D"][answerIndex];
-      row.labels.push(makeLabel(letter,laneX[lane],0.9,row.z));
-    });
+   const order=[0,1,2,3];
+row.correctLane=row.q.c;
+
+order.forEach((answerIndex,lane)=>{
+  const letter=["A","B","C","D"][answerIndex];
+  row.labels.push(
+    makeLabel(letter,laneX[lane],0.9,row.z)
+  );
+});
   });
 }
 function setWeakPlatforms(){
