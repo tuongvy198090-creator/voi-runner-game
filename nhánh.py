@@ -628,7 +628,9 @@ function breakTile(tile){
  tile.position.y=-.25;
 }
 
-function jump(){
+jumpFrom.copy(penguin.position);
+jumpTo.set(laneX[lane],.15,tile.position.z+.25);
+penguin.userData.returnTile=tile;
  if(!started||busy||falling||jumping)return;
 
  if(phase==="outbound"){
