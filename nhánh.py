@@ -729,6 +729,7 @@ function startReturn(){
  }
 
  penguin.position.set(laneX[lane],.15,-34.3);
+ penguin.rotation.y = Math.PI;
  $("stage").textContent="🌙 MÀN 2: TRỞ VỀ";
  $("progress").textContent="Hàng băng 1/4";
  $("quiz").style.display="none";
@@ -743,6 +744,7 @@ function resetBucket(){
  step=0;
  lane=1;
  penguin.position.set(laneX[lane],.15,-34.3);
+ penguin.rotation.y = Math.PI;
 
  returnRows.forEach(r=>r.forEach(t=>{
   t.position.y=0;
