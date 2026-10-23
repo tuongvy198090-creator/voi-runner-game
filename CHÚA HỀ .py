@@ -256,14 +256,43 @@ function makeBucket(){
 const bucket=makeBucket();
 
 const questions=[
- {q:"Toán: Phân tích x² − 9 thành nhân tử.",a:["(x−3)(x+3)","(x−9)(x+1)","(x−3)²","x(x−9)"],c:0},
- {q:"Toán: Hình bình hành có hai đường chéo…",a:["Luôn bằng nhau","Cắt nhau tại trung điểm mỗi đường","Luôn vuông góc","Không cắt nhau"],c:1},
- {q:"KHTN: Đơn vị của lực là gì?",a:["Jun (J)","Oát (W)","Niutơn (N)","Mét (m)"],c:2},
- {q:"Hóa học: Công thức hóa học của nước là gì?",a:["CO₂","O₂","H₂","H₂O"],c:3},
- {q:"Sinh học: Cơ quan chủ yếu trao đổi khí ở người là…",a:["Phổi","Dạ dày","Thận","Gan"],c:0},
- {q:"Địa lí: Đường xích đạo chia Trái Đất thành…",a:["Đông và Tây","Bắc và Nam","4 đại dương","3 phần"],c:1},
- {q:"Lịch sử: Chiến thắng Bạch Đằng năm 938 gắn với ai?",a:["Trần Hưng Đạo","Lê Lợi","Ngô Quyền","Quang Trung"],c:2},
- {q:"Tiếng Anh: Quá khứ của “go” là…",a:["Goed","Gone yesterday","Going","Went"],c:3}
+
+const questions = [
+  // CÂU HỎI CŨ
+  {q:"Toán: Phân tích x² − 9 thành nhân tử.",a:["(x−3)(x+3)","(x−9)(x+1)","(x−3)²","x(x−9)"],c:0},
+  {q:"Toán: Hai đường chéo hình bình hành có tính chất gì?",a:["Luôn bằng nhau","Cắt nhau tại trung điểm mỗi đường","Luôn vuông góc","Không cắt nhau"],c:1},
+  {q:"KHTN: Đơn vị của lực là gì?",a:["Jun (J)","Oát (W)","Niutơn (N)","Mét (m)"],c:2},
+  {q:"Hóa học: Công thức hóa học của nước là gì?",a:["CO₂","O₂","H₂","H₂O"],c:3},
+  {q:"Sinh học: Cơ quan chủ yếu trao đổi khí ở người là gì?",a:["Phổi","Dạ dày","Thận","Gan"],c:0},
+  {q:"Địa lí: Đường xích đạo chia Trái Đất thành hai bán cầu nào?",a:["Đông và Tây","Bắc và Nam","4 đại dương","3 phần"],c:1},
+  {q:"Lịch sử: Chiến thắng Bạch Đằng năm 938 gắn với ai?",a:["Trần Hưng Đạo","Lê Lợi","Ngô Quyền","Quang Trung"],c:2},
+  {q:"Tiếng Anh: Quá khứ đơn của “go” là gì?",a:["Goed","Gone yesterday","Going","Went"],c:3},
+
+  // TOÁN SỐ - ĐẠI SỐ
+  {q:"Toán: Khai triển (x + y)² thu được kết quả nào?",a:["x² + y²","x² + xy + y²","x² + 2xy + y²","x² − 2xy + y²"],c:2},
+  {q:"Toán: Biểu thức nào là phân thức đại số?",a:["(x + 1)/(x − 2)","1/0","√x","x + 1/0"],c:0},
+  {q:"Toán: Điều kiện xác định của phân thức 1/(x − 3) là gì?",a:["x = 3","x ≠ 3","x > 3","x ≠ 0"],c:1},
+  {q:"Toán: Giá trị của 309³ bằng bao nhiêu?",a:["29503629","29503269","28503629","29053629"],c:0},
+
+  // TOÁN HÌNH
+  {q:"Hình học: Tổng số đo 4 góc trong một tứ giác bằng bao nhiêu?",a:["180°","360°","270°","90°"],c:1},
+  {q:"Hình học: Tứ giác có 4 cạnh bằng nhau là hình gì?",a:["Hình chữ nhật","Hình thang cân","Hình thoi","Hình bình hành"],c:2},
+  {q:"Hình học: Tứ giác có 4 góc vuông và 4 cạnh bằng nhau là hình gì?",a:["Hình vuông","Hình chữ nhật","Hình thoi","Hình thang"],c:0},
+
+  // TIẾNG ANH
+  {q:"Tiếng Anh: Từ nào là động từ bất quy tắc ở thì quá khứ đơn?",a:["played","studied","went","watched"],c:2},
+  {q:"Tiếng Anh: Chọn từ đúng: She _____ to school every day.",a:["go","goes","went","going"],c:1},
+  {q:"Tiếng Anh: Từ trái nghĩa với “heavy” là gì?",a:["light","big","strong","hard"],c:0},
+
+  // LỊCH SỬ
+  {q:"Lịch sử: Khởi nghĩa Yên Thế gắn liền với vị anh hùng nào?",a:["Phan Đình Phùng","Hoàng Hoa Thám","Nguyễn Tri Phương","Trương Định"],c:1},
+  {q:"Lịch sử: Thực dân Pháp bắt đầu nổ súng xâm lược Việt Nam năm nào?",a:["1858","1883","1884","1945"],c:0},
+  {q:"Lịch sử: Cuộc khởi nghĩa nào thuộc phong trào Cần Vương có quy mô lớn nhất?",a:["Ba Đình","Bãi Sậy","Hương Khê","Yên Thế"],c:2},
+
+  // ĐỊA LÝ
+  {q:"Địa lí: Gió mùa mùa đông ở miền Bắc Việt Nam có hướng chính nào?",a:["Đông Nam","Tây Nam","Đông Bắc","Tây Bắc"],c:2},
+  {q:"Địa lí: Sông nào dài nhất chảy hoàn toàn trong lãnh thổ Việt Nam?",a:["Sông Hồng","Sông Mê Công","Sông Đồng Nai","Sông Mã"],c:2},
+  {q:"Địa lí: Khí hậu Việt Nam mang tính chất cơ bản nào?",a:["Ôn đới hải dương","Nhiệt đới gió mùa","Khô hạn hoang mạc","Hàn đới"],c:1}
 ];
 let rows=[];
 const laneX=[-4.2,-1.4,1.4,4.2];
@@ -482,9 +511,33 @@ function land(){
     if(lane!==row.correctLane){
       failQuestion();return;
     }
-    row.gate.visible=false;
-    say("🎉 Chính xác! Vách chắn đã hạ xuống!");
-    rowIndex++;
+   row.gate.visible=false;
+say("🎉 Chính xác! Chim cánh cụt đang nhảy sang bờ bên kia!");
+
+rowIndex++;
+
+if(rowIndex>=8){
+  hideQuestion();
+  phase="fish";
+  running=false;
+  bucket.visible=true;
+  updateHUD();
+
+  penguin.position.set(laneX[lane],0,rows[7].z);
+  startReturn();
+  return;
+}
+
+showQuestion();
+updateHUD();
+
+// Tự động nhảy đến hàng tiếp theo
+jumpStart=clock.elapsedTime;
+jumpFromX=penguin.position.x;
+jumpToX=laneX[row.correctLane];
+jumpFromZ=penguin.position.z;
+jumpToZ=rows[rowIndex].z;
+lane=row.correctLane;v
     if(rowIndex>=8){
       hideQuestion();phase="fish";running=false;bucket.visible=true;
       updateHUD();
