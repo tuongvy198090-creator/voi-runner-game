@@ -111,8 +111,18 @@ try{
   renderer.shadowMap.type=THREE.PCFSoftShadowMap;
   clock=new THREE.Clock();
 }catch(e){
-  $("message").textContent="Trình duyệt chưa khởi tạo được đồ họa 3D. Hãy thử Chrome mới nhất.";
+  $("message").textContent =
+    "Lỗi khởi tạo 3D: " + e.message;
+
+  $("start").addEventListener("click", function(){
+    $("panel").innerHTML =
+      "<h1>Chưa khởi tạo được game</h1>" +
+      "<p>" + e.message + "</p>" +
+      "<p>Em hãy gửi anh dòng báo lỗi này nhé.</p>";
+  });
+
   return;
+}
 }
 scene.add(new THREE.HemisphereLight(0xdff8ff,0x3b718b,2.0));
 // ❄️ HIỆU ỨNG TUYẾT RƠI
