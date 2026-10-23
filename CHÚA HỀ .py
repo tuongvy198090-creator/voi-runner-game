@@ -115,6 +115,34 @@ try{
   return;
 }
 scene.add(new THREE.HemisphereLight(0xdff8ff,0x3b718b,2.0));
+// ❄️ HIỆU ỨNG TUYẾT RƠI
+const snowCount = 700;
+const snowPositions = new Float32Array(snowCount * 3);
+const snowSpeeds = [];
+
+for (let i = 0; i < snowCount; i++) {
+  snowPositions[i * 3] = (Math.random() - 0.5) * 55;
+  snowPositions[i * 3 + 1] = Math.random() * 35;
+  snowPositions[i * 3 + 2] = penguin.position.z - Math.random() * 100;
+  snowSpeeds.push(2 + Math.random() * 4);
+}
+
+const snowGeometry = new THREE.BufferGeometry();
+snowGeometry.setAttribute(
+  "position",
+  new THREE.BufferAttribute(snowPositions, 3)
+);
+
+const snowMaterial = new THREE.PointsMaterial({
+  color: 0xffffff,
+  size: 0.16,
+  transparent: true,
+  opacity: 0.9,
+  sizeAttenuation: true
+});
+
+const snow = new THREE.Points(snowGeometry, snowMaterial);
+scene.add(snow);
 const sun=new THREE.DirectionalLight(0xffffff,2.2);
 sun.position.set(-10,22,12);
 sun.castShadow=true;
@@ -361,6 +389,16 @@ function showQuestion(){
 }
 function hideQuestion(){$("question").style.display="none";}
 function startGame(){
+// ☀️ Khôi phục ban ngày khi chơi lại
+scene.background.set(0x79d5f2);
+scene.fog.color.set(0x79d5f2);
+scene.fog.near = 35;
+scene.fog.far = 150;
+
+sun.intensity = 2.2;
+scene.children.forEach(obj => {
+  if (obj.isHemisphereLight) obj.intensity = 2.0;
+});
   $("overlay").style.display="none";
   prepareQuestions();
   setWeakPlatforms();
@@ -384,6 +422,16 @@ function showPanel(title,body,buttonText,callback){
   b.addEventListener("click",callback);$("panel").appendChild(b);
 }
 function startReturn(){
+// 🌙 Chuyển cảnh sang ban đêm
+scene.background.set(0x07152f);
+scene.fog.color.set(0x07152f);
+scene.fog.near = 25;
+scene.fog.far = 110;
+
+sun.intensity = 0.45;
+scene.children.forEach(obj => {
+  if (obj.isHemisphereLight) obj.intensity = 0.65;
+});
   phase="return";running=true;returnIndex=7;lane=1;
   bucket.visible=true;
   penguin.position.set(laneX[lane],0,rows[7].z+4);
@@ -489,6 +537,20 @@ function animate(){
   requestAnimationFrame(animate);
   const dt=clock.getDelta();
   const elapsed=clock.elapsedTime;
+  // Tuyết rơi liên tục
+const snowPos = snow.geometry.attributes.position.array;
+
+for (let i = 0; i < snowCount; i++) {
+  snowPos[i * 3 + 1] -= snowSpeeds[i] * dt;
+
+  if (snowPos[i * 3 + 1] < -1) {
+    snowPos[i * 3 + 1] = 30;
+    snowPos[i * 3] = (Math.random() - 0.5) * 55;
+    snowPos[i * 3 + 2] = penguin.position.z - Math.random() * 100;
+  }
+}
+
+snow.geometry.attributes.position.needsUpdate = true;
   if(running){
     const targetX=laneX[lane];
     if(jumpStart!==null){
