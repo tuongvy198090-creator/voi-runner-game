@@ -122,7 +122,26 @@ skyLight.castShadow=true;
 scene.add(skyLight);
 
 worldGroup=new THREE.Group();scene.add(worldGroup);
-buildWater();buildShore(-31);buildShore(12);buildScenery();
+buildWater();buildShore(-31);buildShore(12);
+function buildScenery(){
+  // Giữ các ngọn núi băng ở xa.
+  for(let i=0;i<18;i++){
+    const h=5+Math.random()*10;
+    const m=new THREE.Mesh(
+      new THREE.ConeGeometry(3+Math.random()*4,h,5),
+      mat(i%2 ? 0xc8eefa : 0xa8d9ee)
+    );
+    m.position.set(
+      (Math.random()-.5)*90,
+      h/2-.5,
+      -35+Math.random()*60
+    );
+    worldGroup.add(m);
+  }
+
+  // Đã bỏ các cột băng ở giữa và xung quanh đường nhảy.
+}
+;
 buildPenguin();buildBucket();buildIceRows();buildSnow();buildStars();
 window.addEventListener("resize",resize);
 animate();
