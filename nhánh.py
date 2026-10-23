@@ -743,7 +743,9 @@ function resetBucket(){
  phase="return";
  step=0;
  lane=1;
+ // Đặt chim ngay trước hàng băng đầu tiên
 penguin.position.set(laneX[lane],.15,-34.3);
+penguin.rotation.y = Math.PI;
 penguin.rotation.y = Math.PI;
 camera.position.set(0,7,-25);
 camera.lookAt(0,1,-35);
