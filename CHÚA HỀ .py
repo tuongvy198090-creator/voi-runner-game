@@ -166,6 +166,7 @@ makeShore(-91);
 
 // Tạo chim cánh cụt 3D
 const penguin=new THREE.Group();
+penguin.rotation.y = Math.PI;
 scene.add(penguin);
 const body=new THREE.Mesh(new THREE.SphereGeometry(0.65,20,16),darkMat);
 body.scale.set(0.82,1.25,0.7);
