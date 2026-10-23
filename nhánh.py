@@ -919,9 +919,9 @@ window.addEventListener("keydown",e=>{
  if(["ArrowLeft","ArrowRight","ArrowUp","ArrowDown"," ","a","d","w","s","A","D","W","S"].includes(e.key)){
   e.preventDefault();
  }
- if(e.key==="ArrowLeft"||e.key==="a"||e.key==="A")move(-1);
- if(e.key==="ArrowRight"||e.key==="d"||e.key==="D")move(1);
- if(e.key===" "||e.key==="Enter"||e.key==="ArrowUp"||e.key==="w"||e.key==="W")jump();
+jumpFrom.copy(penguin.position);
+jumpTo.set(laneX[lane],.15,tile.position.z+.25);
+penguin.userData.returnTile=tile;
 });
 
 init();
