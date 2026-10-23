@@ -123,7 +123,7 @@ const snowSpeeds = [];
 for (let i = 0; i < snowCount; i++) {
   snowPositions[i * 3] = (Math.random() - 0.5) * 55;
   snowPositions[i * 3 + 1] = Math.random() * 35;
-  snowPositions[i * 3 + 2] = penguin.position.z - Math.random() * 100;
+ snowPositions[i * 3 + 2] = -Math.random() * 100;
   snowSpeeds.push(2 + Math.random() * 4);
 }
 
