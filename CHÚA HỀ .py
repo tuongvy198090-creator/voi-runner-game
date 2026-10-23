@@ -15,18 +15,80 @@ GAME = r"""
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
-*{box-sizing:border-box}
-body{margin:0;font-family:Arial,sans-serif;background:#08243c;color:white}
-#wrap{position:relative;width:100%;height:700px;overflow:hidden;background:linear-gradient(#63c7ed,#d7f6ff)}
-#game{width:100%;height:100%;display:block}
-#hud{position:absolute;top:10px;left:10px;right:10px;display:flex;justify-content:space-between;gap:8px;pointer-events:none}
-.pill{background:#062944e8;border:2px solid #b8f2ff;border-radius:14px;padding:9px 12px;font-weight:bold;font-size:14px}
-#question{position:absolute;top:65px;left:50%;transform:translateX(-50%);width:min(94%,560px);background:#082c4ded;border:2px solid #b7efff;border-radius:16px;padding:12px;text-align:center;display:none}
-#qtext{font-size:17px;font-weight:bold;margin-bottom:10px}
-#answers{
-  display:grid;
-  grid-template-columns:repeat(4,minmax(0,1fr));
-  gap:6px;
+.welcome-screen {
+  position: absolute;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+  box-sizing: border-box;
+  background: linear-gradient(
+    135deg,
+    #063b58,
+    #087e9c,
+    #65d9dc
+  );
+}
+
+.welcome-card {
+  width: min(90%, 520px);
+  padding: 30px 24px;
+  text-align: center;
+  color: white;
+  background: rgba(4, 42, 67, 0.94);
+  border: 3px solid #8af3ef;
+  border-radius: 25px;
+  box-shadow: 0 0 30px #4de6e6;
+  box-sizing: border-box;
+}
+
+.welcome-icon {
+  font-size: 42px;
+  margin-bottom: 12px;
+}
+
+.welcome-card h1 {
+  font-size: 27px;
+  line-height: 1.3;
+  color: #a8ffff;
+}
+
+.welcome-card h2 {
+  font-size: 20px;
+  color: #ffffff;
+}
+
+.welcome-card p {
+  font-size: 16px;
+  line-height: 1.7;
+}
+
+#start {
+  display: block;
+  width: 100%;
+  margin-top: 24px;
+  padding: 16px;
+  border: 2px solid white;
+  border-radius: 15px;
+  background: linear-gradient(90deg, #00b894, #00cec9);
+  color: #063b58;
+  font-size: 22px;
+  font-weight: bold;
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+#start:hover {
+  background: #bafff6;
+  transform: scale(1.03);
+}
+
+.welcome-note {
+  margin-top: 20px;
+  color: #a8ffff;
+  font-size: 14px;
 }
 .answer{
   background:#e9faff;
@@ -75,6 +137,28 @@ x solid #73d9f7;border-radius:10px;padding:9px 5px;font-size:14px;font-weight:bo
 </div>
 <div id="overlay">
   <div id="panel">
+  <div id="panel" class="welcome-screen">
+  <div class="welcome-card">
+    <div class="welcome-icon">🐧 ❄️ 🐧</div>
+
+    <h1>CHÀO MỪNG NHÀ THÁM HIỂM!</h1>
+
+    <h2>CUỘC PHIÊU LƯU VƯỢT BĂNG</h2>
+
+    <p>
+      Cùng chim cánh cụt vượt qua những tảng băng,
+      trả lời câu hỏi và mang xô cá trở về nhé!
+    </p>
+
+    <button id="start" type="button">
+      ▶ BẮT ĐẦU
+    </button>
+
+    <div class="welcome-note">
+      ❄️ Sẵn sàng chưa nào? ❄️
+    </div>
+  </div>
+</div>
     <h1>🐧 CHIM CÁNH CỤT VƯỢT BĂNG</h1>
     <p><b>CHẶNG ĐI:</b> Nhảy lên tảng băng có đáp án đúng để vượt qua 8 hàng câu hỏi.</p>
     <p>🐟 Lấy xô cá rồi quay về bờ xuất phát.</p>
@@ -94,10 +178,19 @@ const $=id=>document.getElementById(id);
 const canvas=$("game");
 if(!window.THREE){
   $("message").textContent="Không tải được thư viện 3D. Hãy kiểm tra Internet rồi tải lại trang.";
-  $("start").addEventListener("click",function(){
-    $("panel").innerHTML="<h1>Không tải được 3D</h1><p>Hãy kiểm tra kết nối Internet rồi nhấn F5 để tải lại.</p>";
+ const startButton = document.getElementById("start");
+
+if (startButton) {
+  startButton.addEventListener("click", function (event) {
+    event.preventDefault();
+    event.stopPropagation();
+
+    if (typeof startGame === "function") {
+      startGame();
+    } else {
+      alert("Chưa tìm thấy hàm khởi động trò chơi!");
+    }
   });
-  return;
 }
 let scene,camera,renderer,clock;
 try{
