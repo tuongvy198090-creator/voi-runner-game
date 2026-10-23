@@ -127,7 +127,53 @@ buildWater();
 buildShore(-31);
 buildShore(12);
 buildScenery();
-buildSnowTrees();
+
+function buildSnowTrees(){
+  // Cây thông phủ tuyết nằm xa hai bên,
+  // không che các tảng băng.
+  for(let r=0;r<10;r++){
+    const z=-38+r*5.2;
+
+    for(const side of [-1,1]){
+      for(let k=0;k<3;k++){
+        const x=side*(12+k*3.2);
+        const tz=z+(k-1)*1.5;
+        const h=2.8+Math.random()*1.2;
+
+        const trunk=new THREE.Mesh(
+          new THREE.CylinderGeometry(.12,.18,h*.4,7),
+          mat(0x604a38)
+        );
+        trunk.position.set(x,h*.2,tz);
+        trunk.castShadow=true;
+        worldGroup.add(trunk);
+
+        for(let tier=0;tier<3;tier++){
+          const gh=h*.38;
+          const radius=h*(.19-tier*.035);
+          const y=h*.35+tier*h*.2;
+
+          const green=new THREE.Mesh(
+            new THREE.ConeGeometry(radius,gh,8),
+            mat(0x285f52)
+          );
+          green.position.set(x,y,tz);
+          green.castShadow=true;
+          worldGroup.add(green);
+
+          const snowCap=new THREE.Mesh(
+            new THREE.ConeGeometry(radius*.88,gh*.88,8),
+            mat(0xf5fcff)
+          );
+          snowCap.position.set(x,y+.07,tz-.025);
+          snowCap.castShadow=true;
+          worldGroup.add(snowCap);
+        }
+      }
+    }
+  }
+}
+
 buildPenguin();
 buildBucket();
 buildIceRows();
