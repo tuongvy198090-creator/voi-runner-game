@@ -920,10 +920,15 @@ window.addEventListener("keydown",e=>{
   e.preventDefault();
  }
 jumpFrom.copy(penguin.position);
-jumpTo.set(laneX[lane],.15,tile.position.z+.25);
-penguin.userData.returnTile=tile;
-});
 
+// Nhảy thẳng tới chính giữa tảng băng đã chọn
+jumpTo.set(
+  tile.position.x,
+  .15,
+  tile.position.z
+);
+
+penguin.userData.returnTile=tile;
 init();
 })();
 </script>
